@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "FitRoam",
+    "slug": "fitroam",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "fitroam",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0e0e0e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fitroam.app"
+    },
+    "android": {
+      "package": "com.fitroam.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0e0e0e"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
