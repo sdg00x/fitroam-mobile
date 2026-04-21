@@ -9,11 +9,14 @@ export interface GymData {
   distanceMinutes: number
   equipmentTags:   string[]
   rating:          number | null
+  ratingCount:     number | null
   openNow:         boolean
   matchScore:      number
   matchReasons:    string[]
   priceDisplay:    string
   priceSubDisplay: string
+  dayPassPence:    number | null
+  monthlyPence:    number | null
 }
 
 interface Props {

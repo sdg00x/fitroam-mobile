@@ -5,11 +5,13 @@ import {
 } from 'react-native'
 import { useTheme } from '../../src/theme/useTheme'
 import { GymCard, GymData } from '../../src/components/GymCard'
+import { useRouter } from 'expo-router'
 
 const API_BASE = 'http://192.168.0.64:3000'
 const DEV_LAT    = 51.5074
 const DEV_LNG    = -0.1278
 const FILTERS    = ['All', 'Strength', 'Calisthenics', 'Open now', 'Under £10']
+const router = useRouter()
 
 export default function DiscoverScreen() {
   const { colors, spacing } = useTheme()
@@ -41,6 +43,29 @@ export default function DiscoverScreen() {
       setLoading(false)
     }
   }
+
+   function handleGymPress(gym: GymData) {
+  router.push({
+    pathname: '/gym/[id]',
+    params: {
+      id:               gym.id,
+      name:             gym.name,
+      address:          gym.address,
+      distanceMinutes:  String(gym.distanceMinutes),
+      matchScore:       String(gym.matchScore),
+      priceDisplay:     gym.priceDisplay,
+      priceSubDisplay:  gym.priceSubDisplay,
+      equipmentTags:    JSON.stringify(gym.equipmentTags),
+      matchReasons:     JSON.stringify(gym.matchReasons),
+      openNow:          String(gym.openNow),
+      rating:           String(gym.rating ?? ''),
+      ratingCount:      String(gym.ratingCount ?? ''),
+      dayPassPence:     String(gym.dayPassPence ?? ''),
+      monthlyPence:     String(gym.monthlyPence ?? ''),
+      openingHoursJson: JSON.stringify(null),
+    },
+  })
+}
 
   const topGym     = gyms[0]
   const nearbyGyms = gyms.slice(1)
@@ -162,7 +187,8 @@ export default function DiscoverScreen() {
               <GymCard
                 gym={topGym}
                 variant="featured"
-                onGoHere={g => console.log('Going to:', g.name)}
+                onPress={handleGymPress}
+                onGoHere={handleGymPress}
               />
             </>
           )}
@@ -176,7 +202,7 @@ export default function DiscoverScreen() {
                   key={gym.id}
                   gym={gym}
                   variant="compact"
-                  onPress={g => console.log('Tapped:', g.name)}
+                  onPress={handleGymPress}
                 />
               ))}
             </>
