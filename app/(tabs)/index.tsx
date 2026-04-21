@@ -48,21 +48,39 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      {/* Hero */}
+      
       <View style={[styles.hero, {
-        backgroundColor:  colors.heroBackground,
+        backgroundColor:   colors.heroBackground,
         paddingHorizontal: spacing.screen,
       }]}>
-        <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600',
-          letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>
+        <Text style={{
+          fontSize:      11,
+          color:         colors.textMuted,
+          fontWeight:    '600',
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+          marginBottom:  3,
+        }}>
           You're in
         </Text>
-        <Text style={{ fontSize: 28, fontWeight: '800', color: colors.textPrimary,
-          letterSpacing: -1, lineHeight: 30 }}>
+        <Text style={{
+          fontSize:      28,
+          fontWeight:    '800',
+          color:         colors.textPrimary,
+          letterSpacing: -1,
+          lineHeight:    30,
+        }}>
           London<Text style={{ color: colors.accent }}> ·</Text>
         </Text>
-        <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
-          <Text style={{ color: colors.accent }}>{gyms.length} gyms</Text> match your training
+        <Text style={{
+          fontSize:  13,
+          color:     colors.textMuted,
+          marginTop: 4,
+        }}>
+          {gyms.length > 0
+            ? <Text style={{ color: colors.accent }}>{gyms.length} gyms</Text>
+            : <Text style={{ color: colors.textMuted }}>Finding gyms</Text>
+          }{' '}match your training
         </Text>
       </View>
 
@@ -110,7 +128,12 @@ export default function DiscoverScreen() {
         </View>
       ) : error ? (
         <View style={styles.centred}>
-          <Text style={{ color: colors.error, fontSize: 13, textAlign: 'center', paddingHorizontal: 32 }}>
+          <Text style={{
+            color:             colors.error,
+            fontSize:          13,
+            textAlign:         'center',
+            paddingHorizontal: 32,
+          }}>
             {error}
           </Text>
           <TouchableOpacity onPress={fetchGyms} style={{ marginTop: 16 }}>
@@ -119,7 +142,9 @@ export default function DiscoverScreen() {
         </View>
       ) : gyms.length === 0 ? (
         <View style={styles.centred}>
-          <Text style={{ color: colors.textMuted, fontSize: 13 }}>No gyms found nearby</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+            No gyms found nearby
+          </Text>
         </View>
       ) : (
         <ScrollView
@@ -131,7 +156,9 @@ export default function DiscoverScreen() {
         >
           {topGym && (
             <>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Top match</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                Top match
+              </Text>
               <GymCard
                 gym={topGym}
                 variant="featured"
@@ -141,7 +168,9 @@ export default function DiscoverScreen() {
           )}
           {nearbyGyms.length > 0 && (
             <>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Nearby</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                Nearby
+              </Text>
               {nearbyGyms.map(gym => (
                 <GymCard
                   key={gym.id}
@@ -160,10 +189,10 @@ export default function DiscoverScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:         { flex: 1 },
-  hero:         { paddingTop: 16, paddingBottom: 20 },
-  centred:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  chip:         { flexShrink: 0 },
+  safe:    { flex: 1 },
+  hero:    { paddingTop: 16, paddingBottom: 20 },
+  centred: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  chip:    { flexShrink: 0 },
   sectionLabel: {
     fontSize:      11,
     fontWeight:    '700',
