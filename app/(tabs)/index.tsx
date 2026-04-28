@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
 import { useLocation } from '../../src/hooks/useLocation'
 import { GymCard, GymData } from '../../src/components/GymCard'
+import { useProfile } from '../../src/hooks/useProfile'
 
 const API_BASE = 'http://192.168.0.64:3000'
 
@@ -24,6 +25,7 @@ export default function DiscoverScreen() {
   const { colors, spacing }                         = useTheme()
   const { lat, lng, cityName, loading: locLoading } = useLocation()
   const router                                      = useRouter()
+  const { profile, loading: profileLoading }        = useProfile()
 
   const [gyms,         setGyms]         = useState<GymData[]>([])
   const [loading,      setLoading]      = useState(true)
@@ -31,23 +33,63 @@ export default function DiscoverScreen() {
   const [activeFilter, setActiveFilter] = useState('All')
   const [activeSort,   setActiveSort]   = useState('match')
 
+  // Redirect to onboarding if not onboarded
   useEffect(() => {
-    if (lat && lng) fetchGyms()
-  }, [lat, lng, activeSort])
+    if (!profileLoading && !profile.onboarded) {
+      router.replace('/onboarding/style')
+    }
+  }, [profile.onboarded, profileLoading])
+
+ useEffect(() => {
+  if (lat && lng && profile.onboarded) fetchGyms()
+}, [lat, lng, activeSort, profile.primaryActivity, profile.monthlyBudget, profile.travelDailyBudget, profile.maxDistanceMinutes])
 
   async function fetchGyms() {
     if (!lat || !lng) return
     try {
       setLoading(true)
       setError(null)
-      const params = new URLSearchParams({
-        lat:    String(lat),
-        lng:    String(lng),
-        style:  'strength',
-        budget: '10_to_20',
-        radius: '3000',
-        sort:   activeSort,
-      })
+      // Map activities to backend training style
+const styleMap: Record<string, string> = {
+  lifting:      'strength',
+  calisthenics: 'calisthenics',
+  running:      'cardio',
+  cycling:      'cardio',
+  crossfit:     'crossfit',
+  yoga:         'yoga',
+  swimming:     'cardio',
+  martial_arts: 'mixed',
+  classes:      'mixed',
+  climbing:     'mixed',
+}
+
+// Use travel budget if user is currently in a travelling state
+const isTravelling = profile.lifestyle.some(l =>
+  ['frequent_travel', 'nomad', 'between_cities', 'planning_trip'].includes(l)
+)
+const budget = isTravelling ? profile.travelDailyBudget : profile.monthlyBudget
+
+// Map budget keys to backend format
+const budgetMap: Record<string, string> = {
+  free_only:    'under_5',
+  under_10:     '5_to_10',
+  '10_to_20':   '10_to_20',
+  any_quality:  'over_20',
+  under_20:     '5_to_10',
+  '20_to_40':   '10_to_20',
+  '40_to_80':   '10_to_20',
+  over_80:      'over_20',
+}
+
+const params = new URLSearchParams({
+  lat:     String(lat),
+  lng:     String(lng),
+  style:   styleMap[profile.primaryActivity] ?? 'mixed',
+  budget:  budgetMap[budget] ?? '10_to_20',
+  maxMins: String(profile.maxDistanceMinutes),
+  radius:  '3000',
+  sort:    activeSort,
+})
       const res  = await fetch(`${API_BASE}/api/gyms?${params}`)
       if (!res.ok) throw new Error(`API error ${res.status}`)
       const data = await res.json()
