@@ -1,16 +1,18 @@
 import React, { useState } from 'react'
 import {
-  View, Text, ScrollView, SafeAreaView,
+  View, Text, ScrollView,
   TouchableOpacity, StyleSheet, Image, Modal,
   Linking, Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
 
-const API_BASE = 'http://localhost:3000'
+const API_BASE = 'http://192.168.0.64:3000'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
 
 function formatHours(openingHours: any): { day: string; hours: string }[] {
   if (!openingHours?.periods) return []
@@ -88,7 +90,7 @@ export default function GymDetailScreen() {
     id, name, address, distanceMinutes, matchScore,
     priceDisplay, priceSubDisplay, equipmentTags,
     matchReasons, openNow, rating, ratingCount,
-    dayPassPence, monthlyPence, openingHoursJson,
+    dayPassPence, monthlyPence, openingHoursJson, photoUrls, reviews,
   } = useLocalSearchParams<{
     id:               string
     name:             string
@@ -106,7 +108,9 @@ export default function GymDetailScreen() {
     monthlyPence:     string
     openingHoursJson: string
   }>()
-
+  
+  const photos     = photoUrls ? JSON.parse(photoUrls) : []
+  const gymReviews = reviews   ? JSON.parse(reviews)   : []
   const { colors, spacing, radius } = useTheme()
   const router  = useRouter()
 
@@ -187,11 +191,24 @@ export default function GymDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 
         {/* Hero image */}
-        <Image
-          source={{ uri: `https://picsum.photos/seed/${id}/800/300` }}
+                <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
           style={styles.heroImage}
-          resizeMode="cover"
-        />
+        >
+          {(photos.length > 0
+            ? photos
+            : [`https://picsum.photos/seed/${id}/800/300`]
+          ).map((uri: string, index: number) => (
+            <Image
+              key={index}
+              source={{ uri }}
+              style={{ width: 390, height: 220 }}
+              resizeMode="cover"
+            />
+          ))}
+        </ScrollView>
 
         {/* Score badge */}
         <View style={[styles.scoreBadge, {
@@ -372,6 +389,64 @@ export default function GymDetailScreen() {
                   </View>
                 ))}
               </View>
+            </View>
+          )}
+          {gymReviews.length > 0 && (
+            <View style={{ marginTop: spacing.lg }}>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 10 }]}>
+                What people say
+              </Text>
+              {gymReviews.map((review: any, index: number) => (
+                <View
+                  key={index}
+                  style={[styles.card, {
+                    backgroundColor: colors.surface,
+                    borderColor:     colors.border,
+                    borderRadius:    radius.card,
+                    padding:         spacing.card,
+                    marginBottom:    8,
+                  }]}
+                >
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems:    'center',
+                    marginBottom:  6,
+                    gap:           8,
+                  }}>
+                    <View style={{
+                      width:           28,
+                      height:          28,
+                      borderRadius:    14,
+                      backgroundColor: colors.surfaceRaised,
+                      alignItems:      'center',
+                      justifyContent:  'center',
+                    }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accent }}>
+                        {review.author?.charAt(0) ?? '?'}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textPrimary }}>
+                        {review.author}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: colors.textMuted }}>
+                        {review.time}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 1 }}>
+                      {[1,2,3,4,5].map(star => (
+                        <Text key={star} style={{
+                          fontSize: 11,
+                          color:    star <= Math.round(review.rating) ? '#facc15' : colors.border,
+                        }}>★</Text>
+                      ))}
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18 }}>
+                    {review.text}
+                  </Text>
+                </View>
+              ))}
             </View>
           )}
 

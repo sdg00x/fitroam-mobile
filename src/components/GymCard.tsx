@@ -17,6 +17,14 @@ export interface GymData {
   priceSubDisplay: string
   dayPassPence:    number | null
   monthlyPence:    number | null
+  photoUrls?:      string[]
+  reviews?:        {
+    author: string
+    rating: number
+    text:   string
+    time:   string
+    avatar: string
+  }[]
 }
 
 interface Props {
@@ -41,11 +49,16 @@ export function GymCard({ gym, variant = 'featured', onGoHere, onPress }: Props)
           padding:         spacing.card,
         }]}
       >
-        <Image
-          source={{ uri: `https://picsum.photos/seed/${gym.id}/80/80` }}
-          style={[styles.compactPhoto, { borderRadius: radius.tag }]}
-          resizeMode="cover"
-        />
+        
+       <Image
+        source={{
+          uri: gym.photoUrls && gym.photoUrls.length > 0
+            ? gym.photoUrls[0]
+            : `https://picsum.photos/seed/${gym.id}/80/80`
+        }}
+        style={[styles.compactPhoto, { borderRadius: radius.tag }]}
+        resizeMode="cover"
+      />
         <View style={styles.compactInfo}>
           <Text style={{
             fontSize:   13,
@@ -129,8 +142,12 @@ export function GymCard({ gym, variant = 'featured', onGoHere, onPress }: Props)
       </View>
 
       {/* Photo */}
-      <Image
-        source={{ uri: `https://picsum.photos/seed/${gym.id}/400/160` }}
+       <Image
+        source={{
+          uri: gym.photoUrls && gym.photoUrls.length > 0
+            ? gym.photoUrls[0]
+            : `https://picsum.photos/seed/${gym.id}/400/160`
+        }}
         style={styles.gymPhoto}
         resizeMode="cover"
       />

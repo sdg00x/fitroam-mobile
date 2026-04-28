@@ -6,9 +6,9 @@
     "orientation": "portrait",
     "scheme": "fitroam",
     "userInterfaceStyle": "automatic",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0e0e0e"
     },
@@ -19,12 +19,19 @@
     "android": {
       "package": "com.fitroam.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0e0e0e"
       }
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "FitRoam needs your location to find gyms nearby."
+        }
+      ]
     ]
   }
 }

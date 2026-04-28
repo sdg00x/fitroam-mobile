@@ -1,37 +1,52 @@
 import React, { useState, useEffect } from 'react'
 import {
-  View, Text, ScrollView, SafeAreaView,
+  View, Text, ScrollView,
   TouchableOpacity, ActivityIndicator, StyleSheet,
 } from 'react-native'
-import { useTheme } from '../../src/theme/useTheme'
-import { GymCard, GymData } from '../../src/components/GymCard'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { useTheme } from '../../src/theme/useTheme'
+import { useLocation } from '../../src/hooks/useLocation'
+import { GymCard, GymData } from '../../src/components/GymCard'
 
 const API_BASE = 'http://192.168.0.64:3000'
-const DEV_LAT    = 51.5074
-const DEV_LNG    = -0.1278
-const FILTERS    = ['All', 'Strength', 'Calisthenics', 'Open now', 'Under £10']
-const router = useRouter()
+
+const FILTERS = ['All', 'Strength', 'Calisthenics', 'Open now', 'Under £10']
+
+const SORT_OPTIONS = [
+  { key: 'match',   label: 'Best match' },
+  { key: 'nearest', label: 'Nearest'    },
+  { key: 'rating',  label: 'Top rated'  },
+  { key: 'price',   label: 'Best price' },
+]
 
 export default function DiscoverScreen() {
-  const { colors, spacing } = useTheme()
+  const { colors, spacing }                         = useTheme()
+  const { lat, lng, cityName, loading: locLoading } = useLocation()
+  const router                                      = useRouter()
+
   const [gyms,         setGyms]         = useState<GymData[]>([])
   const [loading,      setLoading]      = useState(true)
   const [error,        setError]        = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState('All')
+  const [activeSort,   setActiveSort]   = useState('match')
 
-  useEffect(() => { fetchGyms() }, [])
+  useEffect(() => {
+    if (lat && lng) fetchGyms()
+  }, [lat, lng, activeSort])
 
   async function fetchGyms() {
+    if (!lat || !lng) return
     try {
       setLoading(true)
       setError(null)
       const params = new URLSearchParams({
-        lat:    String(DEV_LAT),
-        lng:    String(DEV_LNG),
+        lat:    String(lat),
+        lng:    String(lng),
         style:  'strength',
         budget: '10_to_20',
-        radius: '5000',
+        radius: '3000',
+        sort:   activeSort,
       })
       const res  = await fetch(`${API_BASE}/api/gyms?${params}`)
       if (!res.ok) throw new Error(`API error ${res.status}`)
@@ -44,7 +59,7 @@ export default function DiscoverScreen() {
     }
   }
 
-   function handleGymPress(gym: GymData) {
+ function handleGymPress(gym: GymData) {
   router.push({
     pathname: '/gym/[id]',
     params: {
@@ -63,6 +78,8 @@ export default function DiscoverScreen() {
       dayPassPence:     String(gym.dayPassPence ?? ''),
       monthlyPence:     String(gym.monthlyPence ?? ''),
       openingHoursJson: JSON.stringify(null),
+      photoUrls:        JSON.stringify(gym.photoUrls ?? []),
+      reviews:          JSON.stringify(gym.reviews ?? []),
     },
   })
 }
@@ -73,7 +90,7 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      
+      {/* Hero */}
       <View style={[styles.hero, {
         backgroundColor:   colors.heroBackground,
         paddingHorizontal: spacing.screen,
@@ -95,7 +112,8 @@ export default function DiscoverScreen() {
           letterSpacing: -1,
           lineHeight:    30,
         }}>
-          London<Text style={{ color: colors.accent }}> ·</Text>
+          {locLoading ? 'Locating...' : cityName}
+          <Text style={{ color: colors.accent }}> ·</Text>
         </Text>
         <Text style={{
           fontSize:  13,
@@ -109,7 +127,50 @@ export default function DiscoverScreen() {
         </Text>
       </View>
 
-      {/* Filters */}
+      {/* Sort tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.screen,
+          paddingTop:        spacing.sm,
+          paddingBottom:     4,
+          gap:               6,
+        }}
+        style={{ flexGrow: 0, backgroundColor: colors.background }}
+      >
+        {SORT_OPTIONS.map(opt => (
+          <TouchableOpacity
+            key={opt.key}
+            onPress={() => setActiveSort(opt.key)}
+            activeOpacity={0.75}
+            style={{
+              paddingHorizontal: 13,
+              paddingVertical:   6,
+              borderRadius:      100,
+              borderWidth:       1,
+              borderColor:       activeSort === opt.key
+                ? colors.accent
+                : colors.border,
+              backgroundColor:   activeSort === opt.key
+                ? colors.accent
+                : colors.surfaceRaised,
+            }}
+          >
+            <Text style={{
+              fontSize:   11,
+              fontWeight: '700',
+              color:      activeSort === opt.key
+                ? colors.accentText
+                : colors.textSecondary,
+            }}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Filter chips */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -126,16 +187,24 @@ export default function DiscoverScreen() {
             onPress={() => setActiveFilter(f)}
             activeOpacity={0.75}
             style={[styles.chip, {
-              backgroundColor: activeFilter === f ? colors.accent : colors.surfaceRaised,
+              backgroundColor: activeFilter === f
+                ? colors.surfaceRaised
+                : 'transparent',
               borderRadius:    6,
               paddingHorizontal: 13,
               paddingVertical:    5,
+              borderWidth:       1,
+              borderColor:       activeFilter === f
+                ? colors.border
+                : 'transparent',
             }]}
           >
             <Text style={{
               fontSize:   11,
-              fontWeight: '700',
-              color:      activeFilter === f ? colors.accentText : colors.textSecondary,
+              fontWeight: '600',
+              color:      activeFilter === f
+                ? colors.textSecondary
+                : colors.textMuted,
             }}>
               {f}
             </Text>
