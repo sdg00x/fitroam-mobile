@@ -122,6 +122,7 @@ const params = new URLSearchParams({
       openingHoursJson: JSON.stringify(null),
       photoUrls:        JSON.stringify(gym.photoUrls ?? []),
       reviews:          JSON.stringify(gym.reviews ?? []),
+      websiteUrl:       gym.websiteUrl ?? '',
     },
   })
 }

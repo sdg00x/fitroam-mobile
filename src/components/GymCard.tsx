@@ -25,6 +25,7 @@ export interface GymData {
     time:   string
     avatar: string
   }[]
+  websiteUrl?:  string
 }
 
 interface Props {

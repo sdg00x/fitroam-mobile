@@ -1,8 +1,9 @@
+import * as Linking from 'expo-linking'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import React, { useState } from 'react'
 import {
   View, Text, ScrollView,
-  TouchableOpacity, StyleSheet, Image, Modal,
-  Linking, Platform,
+  TouchableOpacity, StyleSheet, Image, Modal, Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -91,23 +92,27 @@ export default function GymDetailScreen() {
     priceDisplay, priceSubDisplay, equipmentTags,
     matchReasons, openNow, rating, ratingCount,
     dayPassPence, monthlyPence, openingHoursJson, photoUrls, reviews,
-  } = useLocalSearchParams<{
-    id:               string
-    name:             string
-    address:          string
-    distanceMinutes:  string
-    matchScore:       string
-    priceDisplay:     string
-    priceSubDisplay:  string
-    equipmentTags:    string
-    matchReasons:     string
-    openNow:          string
-    rating:           string
-    ratingCount:      string
-    dayPassPence:     string
-    monthlyPence:     string
-    openingHoursJson: string
-  }>()
+    websiteUrl,
+ } = useLocalSearchParams<{
+  id:               string
+  name:             string
+  address:          string
+  distanceMinutes:  string
+  matchScore:       string
+  priceDisplay:     string
+  priceSubDisplay:  string
+  equipmentTags:    string
+  matchReasons:     string
+  openNow:          string
+  rating:           string
+  ratingCount:      string
+  dayPassPence:     string
+  monthlyPence:     string
+  openingHoursJson: string
+  photoUrls:        string
+  reviews:          string
+  websiteUrl:       string
+}>()
   
   const photos     = photoUrls ? JSON.parse(photoUrls) : []
   const gymReviews = reviews   ? JSON.parse(reviews)   : []
@@ -141,34 +146,62 @@ export default function GymDetailScreen() {
     if (rec) setAccessType(rec.recommendMonthly ? 'monthly' : 'day_pass')
   }
 
-  async function handleConfirm() {
-    try {
-      setSaving(true)
-      const departDate = new Date()
-      departDate.setDate(departDate.getDate() + days)
+ async function handleConfirm() {
+  try {
+    setSaving(true)
+    const departDate = new Date()
+    departDate.setDate(departDate.getDate() + days)
 
-      const res = await fetch(`${API_BASE}/api/gyms/${id}/access`, {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id':    'seed_user_placeholder',
-        },
-        body: JSON.stringify({
-          accessType,
-          citySlug:        'london-gb',
-          expectedEndDate: departDate.toISOString().split('T')[0],
-        }),
-      })
-      if (!res.ok) throw new Error('Failed')
-      setSaved(true)
-      setShowPassport(false)
-    } catch {
-      console.error('Could not save')
-    } finally {
-      setSaving(false)
+    // 1. Save to the backend — creates the access record + scheduled reminder
+    const res = await fetch(`${API_BASE}/api/gyms/${id}/access`, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id':    'seed_user_placeholder',
+      },
+      body: JSON.stringify({
+        accessType,
+        citySlug:        'nottingham-gb',
+        expectedEndDate: departDate.toISOString().split('T')[0],
+      }),
+    })
+
+    if (!res.ok) {
+      const errText = await res.text()
+      console.error('[Access] API error:', res.status, errText)
+      throw new Error(`API ${res.status}`)
     }
-  }
 
+    // 2. Save locally for instant Trips/Profile display
+    const visitsKey = '@fitroam:visits'
+    const existing  = await AsyncStorage.getItem(visitsKey)
+    const visits    = existing ? JSON.parse(existing) : []
+    visits.unshift({
+      id:          `visit_${Date.now()}`,
+      gymId:       id,
+      gymName:     name,
+      gymAddress:  address,
+      accessType,
+      days,
+      websiteUrl:  websiteUrl ?? null,
+      expectedEnd: departDate.toISOString().split('T')[0],
+      visitedAt:   new Date().toISOString(),
+    })
+    await AsyncStorage.setItem(visitsKey, JSON.stringify(visits.slice(0, 50)))
+
+    setSaved(true)
+    setShowPassport(false)
+
+    // 3. Optionally open gym website so user can actually sign up
+    if (websiteUrl) {
+      setTimeout(() => Linking.openURL(websiteUrl), 500)
+    }
+  } catch (err) {
+    console.error('[Visit] Could not save:', err)
+  } finally {
+    setSaving(false)
+  }
+}
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
