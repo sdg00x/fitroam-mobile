@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
+import { useUser } from '../../src/hooks/useUser'
+import { GetAccessForm } from '../../src/components/GetAccessForm'
 
 const API_BASE = 'http://192.168.0.64:3000'
 
@@ -118,6 +120,7 @@ export default function GymDetailScreen() {
   const gymReviews = reviews   ? JSON.parse(reviews)   : []
   const { colors, spacing, radius } = useTheme()
   const router  = useRouter()
+  const { user, isSignedIn } = useUser()
 
   const [showPassport, setShowPassport] = useState(false)
   const [days,         setDays]         = useState(1)
@@ -125,6 +128,7 @@ export default function GymDetailScreen() {
   const [saving,       setSaving]       = useState(false)
   const [saved,        setSaved]        = useState(false)
   const [showHours,    setShowHours]    = useState(false)
+  const [showSignup,   setShowSignup]   = useState(false)
 
   const tags         = equipmentTags    ? JSON.parse(equipmentTags)    : []
   const reasons      = matchReasons     ? JSON.parse(matchReasons)     : []
@@ -157,7 +161,7 @@ export default function GymDetailScreen() {
       method:  'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id':    'seed_user_placeholder',
+        'x-user-id':    user?.id || 'seed_user_placeholder',
       },
       body: JSON.stringify({
         accessType,
@@ -496,7 +500,7 @@ export default function GymDetailScreen() {
             </View>
           ) : (
             <TouchableOpacity
-              onPress={() => setShowPassport(true)}
+              onPress={() => { if (isSignedIn) { setShowPassport(true) } else { setShowSignup(true) } }}
               activeOpacity={0.85}
               style={[styles.goBtn, {
                 backgroundColor: colors.accent,
@@ -511,7 +515,7 @@ export default function GymDetailScreen() {
                 textTransform: 'uppercase',
                 letterSpacing: 1,
               }}>
-                I'm going here
+                Get access
               </Text>
               <Text style={{ fontSize: 12, color: colors.accentText, opacity: 0.7, marginTop: 3 }}>
                 We'll remind you to cancel before you leave
@@ -751,9 +755,23 @@ export default function GymDetailScreen() {
             </TouchableOpacity>
 
           </ScrollView>
-        </SafeAreaView>
+          <Modal visible={showSignup} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowSignup(false)}>
+        <GetAccessForm
+          mode="access"
+          contextName={name}
+          onComplete={() => { setShowSignup(false); setShowPassport(true) }}
+        />
+      </Modal>
+    </SafeAreaView>
       </Modal>
 
+      <Modal visible={showSignup} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowSignup(false)}>
+        <GetAccessForm
+          mode="access"
+          contextName={name}
+          onComplete={() => { setShowSignup(false); setShowPassport(true) }}
+        />
+      </Modal>
     </SafeAreaView>
   )
 }

@@ -25,6 +25,8 @@ export interface UserProfile {
   priorities:         string[]
 
   onboarded:          boolean
+  // Training pattern (B+C strategy)
+  trainingPattern:    string | null
 }
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -37,6 +39,7 @@ const DEFAULT_PROFILE: UserProfile = {
   maxDistanceMinutes: 15,
   priorities:         [],
   onboarded:          false,
+  trainingPattern:    null,
 }
 
 export function useProfile() {

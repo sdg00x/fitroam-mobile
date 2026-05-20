@@ -8,6 +8,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="lifestyle" />
       <Stack.Screen name="budget" />
       <Stack.Screen name="priorities" />
+      <Stack.Screen name="training" />
     </Stack>
   )
 }
