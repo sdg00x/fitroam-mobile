@@ -1,10 +1,12 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
 
 export default function TripsScreen() {
   const { colors, spacing } = useTheme()
+  const router = useRouter()
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -20,6 +22,7 @@ export default function TripsScreen() {
           </Text>
           <TouchableOpacity
             activeOpacity={0.8}
+            onPress={() => router.push('/trips/new')}
             style={{
               backgroundColor:   colors.accent,
               paddingHorizontal: 14,
