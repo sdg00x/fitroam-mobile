@@ -96,8 +96,7 @@ export default function TripsScreen() {
   )
 
   function handleTripPress(trip: Trip) {
-    // Trip detail screen comes in step 7. For now, log and noop.
-    console.log('Tapped trip:', trip.id, trip.name)
+    router.push(`/trips/${trip.id}`)
   }
 
   const { nextUp, upcoming, past } = categorizeTrips(trips)
