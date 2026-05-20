@@ -39,15 +39,15 @@ export function GymCard({ gym, variant = 'featured', onGoHere, onPress }: Props)
   const { colors, spacing, radius } = useTheme()
 
   if (variant === 'compact') {
+   // Featured card
     return (
       <TouchableOpacity
         onPress={() => onPress?.(gym)}
-        activeOpacity={0.8}
-        style={[styles.compact, {
+        activeOpacity={0.85}
+        style={[styles.featured, {
           backgroundColor: colors.surface,
-          borderRadius:    radius.row,
+          borderRadius:    radius.card,
           borderColor:     colors.border,
-          padding:         spacing.card,
         }]}
       >
         
