@@ -4,7 +4,6 @@ import { useTheme } from '../../src/theme/useTheme'
 
 export default function TabLayout() {
   const { colors } = useTheme()
-
   return (
     <Tabs
       screenOptions={{
@@ -25,29 +24,29 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
-          title: 'Discover',
+          title: 'Explore',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="compass-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="routes"
+        name="trips"
         options={{
-          title: 'Routes',
+          title: 'Trips',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="parks"
-        options={{
-          title: 'Parks',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="leaf-outline" size={size} color={color} />
+            <Ionicons name="airplane-outline" size={size} color={color} />
           ),
         }}
       />

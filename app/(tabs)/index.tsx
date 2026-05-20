@@ -21,7 +21,7 @@ const SORT_OPTIONS = [
   { key: 'price',   label: 'Best price' },
 ]
 
-export default function DiscoverScreen() {
+export default function ExploreScreen() {
   const { colors, spacing }                         = useTheme()
   const { lat, lng, cityName, loading: locLoading } = useLocation()
   const router                                      = useRouter()
