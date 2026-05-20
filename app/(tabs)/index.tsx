@@ -6,9 +6,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
-import { useLocation } from '../../src/hooks/useLocation'
+import { useViewingLocation } from '../../src/hooks/useViewingLocation'
+import { PlacePicker } from '../../src/components/PlacePicker'
+import { getServiceCoverage } from '../../src/lib/serviceCoverage'
 import { GymCard, GymData } from '../../src/components/GymCard'
 import { useProfile } from '../../src/hooks/useProfile'
+import { Ionicons } from '@expo/vector-icons'
 
 const API_BASE = 'http://192.168.0.64:3000'
 
@@ -22,8 +25,8 @@ const SORT_OPTIONS = [
 ]
 
 export default function ExploreScreen() {
-  const { colors, spacing }                            = useTheme()
-  const { lat: gpsLat, lng: gpsLng, cityName: gpsCity, loading: locLoading } = useLocation()
+ const { colors, spacing }                            = useTheme()
+  const { location: viewingLoc, loading: locLoading, setLocation, resetLocation, isManual } = useViewingLocation()
   const router                                         = useRouter()
   const { profile, loading: profileLoading }           = useProfile()
 
@@ -38,12 +41,26 @@ export default function ExploreScreen() {
     planningLng?:      string
   }>()
 
-  const planningMode = !!params.planningTripId && !!params.planningLegId
 
-  // Use planning leg's coordinates when in planning mode, otherwise GPS
-  const lat       = planningMode && params.planningLat ? parseFloat(params.planningLat) : gpsLat
-  const lng       = planningMode && params.planningLng ? parseFloat(params.planningLng) : gpsLng
-  const cityName  = planningMode ? params.planningCity : gpsCity
+ const planningMode = !!params.planningTripId && !!params.planningLegId
+
+  // Planning mode: use leg's coordinates.
+  // Otherwise: viewing location (manual override or GPS).
+  const lat       = planningMode && params.planningLat
+    ? parseFloat(params.planningLat)
+    : viewingLoc?.lat ?? null
+  const lng       = planningMode && params.planningLng
+    ? parseFloat(params.planningLng)
+    : viewingLoc?.lng ?? null
+  const cityName  = planningMode
+    ? params.planningCity
+    : viewingLoc?.cityName ?? null
+  const citySlug  = planningMode
+    ? undefined
+    : viewingLoc?.citySlug
+
+  const coverage   = getServiceCoverage(citySlug)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const [gyms,         setGyms]         = useState<GymData[]>([])
   const [loading,      setLoading]      = useState(true)
@@ -238,15 +255,31 @@ const params = new URLSearchParams({
         }}>
           You're in
         </Text>
-        <Text style={{
-          fontSize:      32,
-          fontWeight:    '800',
-          color:         colors.textPrimary,
-          letterSpacing: -1,
-          lineHeight:    34,
-        }}>
-          {locLoading ? 'Locating...' : cityName}
-        </Text>
+       <TouchableOpacity
+          onPress={() => !planningMode && setPickerOpen(true)}
+          activeOpacity={planningMode ? 1 : 0.7}
+          disabled={planningMode}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{
+              fontSize:      28,
+              fontWeight:    '800',
+              color:         colors.textPrimary,
+              letterSpacing: -1,
+              lineHeight:    30,
+            }}>
+              {locLoading ? 'Locating...' : cityName || 'Pick a city'}
+            </Text>
+            {!planningMode && (
+              <Ionicons
+                name="chevron-down"
+                size={20}
+                color={colors.textMuted}
+                style={{ marginLeft: 6, marginTop: 4 }}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
         <Text style={{
           fontSize:  13,
           color:     colors.textSecondary,
@@ -348,9 +381,44 @@ const params = new URLSearchParams({
       {loading ? (
         <View style={styles.centred}>
           <ActivityIndicator color={colors.accent} />
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 8 }}>
-            Finding gyms...
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+          <Text style={{ fontSize: 13, color: colors.textMuted }}>
+            {gyms.length > 0
+              ? <Text style={{ color: colors.accent }}>{gyms.length} gyms</Text>
+              : <Text style={{ color: colors.textMuted }}>Finding gyms</Text>
+            }{' '}match your training
           </Text>
+          {!planningMode && coverage.serviceTier === 'concierge' && (
+            <View style={{
+              marginLeft:        8,
+              paddingHorizontal: 8,
+              paddingVertical:   2,
+              borderRadius:      100,
+              backgroundColor:   colors.accent,
+            }}>
+              <Text style={{
+                fontSize:      9,
+                fontWeight:    '800',
+                color:         colors.accentText,
+                letterSpacing: 0.5,
+              }}>
+                INSTANT BOOKING
+              </Text>
+            </View>
+          )}
+          {!planningMode && isManual && (
+            <TouchableOpacity onPress={resetLocation} hitSlop={6} style={{ marginLeft: 8 }}>
+              <Text style={{
+                fontSize:   11,
+                fontWeight: '700',
+                color:      colors.textMuted,
+                textDecorationLine: 'underline',
+              }}>
+                Use my location
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
         </View>
       ) : error ? (
         <View style={styles.centred}>
@@ -409,13 +477,31 @@ const params = new URLSearchParams({
                   planningMode={planningMode}
                   onSaveToTrip={handleSaveToTrip}
                 />
-                
+
               ))}
             </>
           )}
         </ScrollView>
       )}
 
+      <PlacePicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        showCurrentLocation={true}
+        onUseCurrentLocation={resetLocation}
+        onPick={(place) => {
+          setLocation({
+            lat:              place.lat,
+            lng:              place.lng,
+            cityName:         place.city || place.name,
+            citySlug:         place.citySlug,
+            country:          place.country,
+            placeId:          place.placeId,
+            formattedAddress: place.formattedAddress,
+          })
+          setPickerOpen(false)
+        }}
+      />
     </SafeAreaView>
   )
 }

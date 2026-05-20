@@ -27,12 +27,14 @@ interface Prediction {
 }
 
 interface Props {
-  visible:  boolean
-  onClose:  () => void
-  onPick:   (place: PickedPlace) => void
+  visible:           boolean
+  onClose:           () => void
+  onPick:            (place: PickedPlace) => void
+  onUseCurrentLocation?: () => void
+  showCurrentLocation?:  boolean
 }
 
-export function PlacePicker({ visible, onClose, onPick }: Props) {
+export function PlacePicker({ visible, onClose, onPick, onUseCurrentLocation, showCurrentLocation }: Props) {
   const { colors, spacing } = useTheme()
   const [query,       setQuery]       = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
@@ -168,6 +170,33 @@ export function PlacePicker({ visible, onClose, onPick }: Props) {
             </View>
           )}
 
+          {showCurrentLocation && (
+            <TouchableOpacity
+              onPress={() => {
+                onUseCurrentLocation?.()
+                onClose()
+              }}
+              activeOpacity={0.7}
+              style={{
+                paddingHorizontal: spacing.screen,
+                paddingVertical:   14,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+                flexDirection:     "row",
+                alignItems:        "center",
+              }}
+            >
+              <Ionicons name="navigate" size={18} color={colors.accent} />
+              <Text style={{
+                fontSize:   15,
+                fontWeight: "700",
+                color:      colors.accent,
+                marginLeft: 12,
+              }}>
+                Use my current location
+              </Text>
+            </TouchableOpacity>
+          )}
           <FlatList
             data={predictions}
             keyExtractor={p => p.placeId}
