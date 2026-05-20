@@ -225,7 +225,7 @@ export default function GymDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
 
         {/* Hero image */}
                 <ScrollView
@@ -486,45 +486,51 @@ export default function GymDetailScreen() {
               ))}
             </View>
           )}
-
-          {/* CTA */}
-          {saved ? (
-            <View style={[styles.savedBanner, { backgroundColor: '#1a3a1a', borderRadius: radius.card, marginTop: spacing.lg }]}>
-              <Ionicons name="checkmark-circle" size={20} color="#4ade80" />
-              <View style={{ marginLeft: 10 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#4ade80' }}>You're going!</Text>
-                <Text style={{ fontSize: 12, color: '#4ade80', opacity: 0.7, marginTop: 2 }}>
-                  We'll remind you to cancel before you leave.
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={() => { if (isSignedIn) { setShowPassport(true) } else { setShowSignup(true) } }}
-              activeOpacity={0.85}
-              style={[styles.goBtn, {
-                backgroundColor: colors.accent,
-                borderRadius:    radius.card,
-                marginTop:       spacing.lg,
-              }]}
-            >
-              <Text style={{
-                fontSize:      15,
-                fontWeight:    '800',
-                color:         colors.accentText,
-                textTransform: 'uppercase',
-                letterSpacing: 1,
-              }}>
-                Get access
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.accentText, opacity: 0.7, marginTop: 3 }}>
-                We'll remind you to cancel before you leave
-              </Text>
-            </TouchableOpacity>
-          )}
-
         </View>
       </ScrollView>
+
+      {/* Sticky bottom CTA */}
+      {saved ? (
+        <View style={styles.stickyFooter} pointerEvents="box-none">
+          <View style={[styles.savedBanner, { backgroundColor: "#1a3a1a", borderRadius: radius.card }]}>
+            <Ionicons name="checkmark-circle" size={20} color="#4ade80" />
+            <View style={{ marginLeft: 10, flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#4ade80" }}>You're going!</Text>
+              <Text style={{ fontSize: 12, color: "#4ade80", opacity: 0.7, marginTop: 2 }}>
+                We'll remind you to cancel before you leave.
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.stickyFooter} pointerEvents="box-none">
+          <TouchableOpacity
+            onPress={() => { if (isSignedIn) { setShowPassport(true) } else { setShowSignup(true) } }}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor:    colors.accent,
+              borderRadius:       100,
+              paddingHorizontal:  44,
+              paddingVertical:    18,
+              shadowColor:        "#000",
+              shadowOpacity:      0.25,
+              shadowRadius:       12,
+              shadowOffset:       { width: 0, height: 4 },
+              elevation:          6,
+            }}
+          >
+            <Text style={{
+              fontSize:      15,
+              fontWeight:    "800",
+              color:         colors.accentText,
+              textTransform: "uppercase",
+              letterSpacing: 1,
+            }}>
+              Get access
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Access passport modal */}
       <Modal
@@ -778,6 +784,7 @@ export default function GymDetailScreen() {
 
 const styles = StyleSheet.create({
   safe:    { flex: 1 },
+  stickyFooter: { position: "absolute", left: 20, right: 20, bottom: 32, alignItems: "center" },
   header: {
     flexDirection:     'row',
     alignItems:        'center',
