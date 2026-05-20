@@ -107,9 +107,20 @@ export default function TripDetailScreen() {
     }
   }
 
-  function planLeg(_leg: TripLeg) {
-    // Step 8 lands here — Explore opens with viewingLocation set to this leg.
-    Alert.alert('Coming soon', 'Planning mode in Explore is the next step.')
+  function planLeg(leg: TripLeg) {
+    if (!trip) return
+    router.push({
+      pathname: '/(tabs)',
+      params: {
+        planningTripId:   trip.id,
+        planningLegId:    leg.id,
+        planningTripName: trip.name,
+        planningLegOrder: String(leg.legOrder + 1),
+        planningCity:     leg.city,
+        planningLat:      String(leg.lat),
+        planningLng:      String(leg.lng),
+      },
+    })
   }
 
   if (loading) {

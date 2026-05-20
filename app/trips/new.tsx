@@ -1,20 +1,20 @@
 import React, { useState, useMemo } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, Alert, ActivityIndicator, Modal, FlatList,
+  StyleSheet, Alert, ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
-import { UK_CITIES, City } from '../../src/lib/cities'
+import { PlacePicker, PickedPlace } from '../../src/components/PlacePicker'
 
 const API_BASE = 'http://192.168.0.64:3000'
 
 interface LegDraft {
-  city:      City | null
-  arriveOn:  string  // ISO date string YYYY-MM-DD
-  departOn:  string
+  place:    PickedPlace | null
+  arriveOn: string
+  departOn: string
 }
 
 const REASONS = [
@@ -27,17 +27,16 @@ export default function NewTripScreen() {
   const { colors, spacing, radius } = useTheme()
   const router = useRouter()
 
-  const [name,        setName]        = useState('')
-  const [reason,      setReason]      = useState<string | null>(null)
-  const [legs,        setLegs]        = useState<LegDraft[]>([
-    { city: null, arriveOn: '', departOn: '' },
+  const [name,       setName]       = useState('')
+  const [reason,     setReason]     = useState<string | null>(null)
+  const [legs,       setLegs]       = useState<LegDraft[]>([
+    { place: null, arriveOn: '', departOn: '' },
   ])
-  const [submitting,  setSubmitting]  = useState(false)
-  const [cityPickerForLeg, setCityPickerForLeg] = useState<number | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [pickerForLeg, setPickerForLeg] = useState<number | null>(null)
 
-  // Auto-suggest name from legs
   const suggestedName = useMemo(() => {
-    const filled = legs.filter(l => l.city).map(l => l.city!.name)
+    const filled = legs.filter(l => l.place).map(l => l.place!.city || l.place!.name)
     if (filled.length === 0) return ''
     if (filled.length === 1) return `${filled[0]} trip`
     return filled.join(' + ')
@@ -50,7 +49,7 @@ export default function NewTripScreen() {
   }
 
   function addLeg() {
-    setLegs(prev => [...prev, { city: null, arriveOn: '', departOn: '' }])
+    setLegs(prev => [...prev, { place: null, arriveOn: '', departOn: '' }])
   }
 
   function removeLeg(i: number) {
@@ -59,28 +58,26 @@ export default function NewTripScreen() {
   }
 
   function isValidDate(s: string) {
-    // Expect YYYY-MM-DD
     return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s).getTime())
   }
 
   async function handleCreate() {
-    // Validate
     if (!effectiveName) {
-      Alert.alert('Missing name', 'Add a trip name or select at least one city.')
+      Alert.alert('Missing name', 'Add a trip name or pick a destination first.')
       return
     }
     for (let i = 0; i < legs.length; i++) {
       const l = legs[i]
-      if (!l.city) {
-        Alert.alert('Missing city', `Pick a city for leg ${i + 1}.`)
+      if (!l.place) {
+        Alert.alert('Missing destination', `Pick a destination for leg ${i + 1}.`)
         return
       }
       if (!isValidDate(l.arriveOn) || !isValidDate(l.departOn)) {
-        Alert.alert('Dates needed', `Leg ${i + 1} needs valid dates in YYYY-MM-DD format.`)
+        Alert.alert('Dates needed', `Leg ${i + 1} needs valid dates in YYYY-MM-DD.`)
         return
       }
       if (new Date(l.departOn) < new Date(l.arriveOn)) {
-        Alert.alert('Date order', `Leg ${i + 1}: depart date is before arrive date.`)
+        Alert.alert('Date order', `Leg ${i + 1}: depart is before arrive.`)
         return
       }
     }
@@ -97,13 +94,15 @@ export default function NewTripScreen() {
           name:   effectiveName,
           reason: reason ?? undefined,
           legs:   legs.map(l => ({
-            city:     l.city!.name,
-            citySlug: l.city!.slug,
-            country:  l.city!.country,
-            lat:      l.city!.lat,
-            lng:      l.city!.lng,
-            arriveOn: l.arriveOn,
-            departOn: l.departOn,
+            city:             l.place!.city,
+            citySlug:         l.place!.citySlug,
+            country:          l.place!.country,
+            placeId:          l.place!.placeId,
+            formattedAddress: l.place!.formattedAddress,
+            lat:              l.place!.lat,
+            lng:              l.place!.lng,
+            arriveOn:         l.arriveOn,
+            departOn:         l.departOn,
           })),
         }),
       })
@@ -113,7 +112,6 @@ export default function NewTripScreen() {
         throw new Error(err.error || `API ${res.status}`)
       }
 
-      // Success — go back to Trips tab
       router.back()
     } catch (err: any) {
       Alert.alert('Could not create trip', err.message || 'Try again.')
@@ -124,16 +122,11 @@ export default function NewTripScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View style={[styles.header, { paddingHorizontal: spacing.screen }]}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="close" size={26} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={{
-          fontSize:   17,
-          fontWeight: '700',
-          color:      colors.textPrimary,
-        }}>
+        <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textPrimary }}>
           New trip
         </Text>
         <View style={{ width: 26 }} />
@@ -144,7 +137,6 @@ export default function NewTripScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Trip name */}
         <Text style={[styles.eyebrow, { color: colors.textMuted, marginTop: 16 }]}>TRIP NAME</Text>
         <TextInput
           value={name}
@@ -159,7 +151,6 @@ export default function NewTripScreen() {
           }]}
         />
 
-        {/* Reason */}
         <Text style={[styles.eyebrow, { color: colors.textMuted }]}>REASON (OPTIONAL)</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
           {REASONS.map(r => (
@@ -187,7 +178,6 @@ export default function NewTripScreen() {
           ))}
         </View>
 
-        {/* Legs */}
         <Text style={[styles.eyebrow, { color: colors.textMuted }]}>LEGS</Text>
         {legs.map((leg, i) => (
           <View key={i} style={[styles.legCard, {
@@ -197,9 +187,9 @@ export default function NewTripScreen() {
           }]}>
             <View style={styles.legHeader}>
               <Text style={{
-                fontSize:   11,
-                fontWeight: '800',
-                color:      colors.accent,
+                fontSize:      11,
+                fontWeight:    '800',
+                color:         colors.accent,
                 letterSpacing: 1,
               }}>
                 LEG {i + 1}
@@ -211,26 +201,37 @@ export default function NewTripScreen() {
               )}
             </View>
 
-            {/* City picker */}
             <TouchableOpacity
-              onPress={() => setCityPickerForLeg(i)}
+              onPress={() => setPickerForLeg(i)}
               activeOpacity={0.7}
-              style={[styles.cityPickerBtn, { borderColor: colors.border }]}
+              style={[styles.pickerBtn, { borderColor: colors.border }]}
             >
               <Ionicons name="location-outline" size={18} color={colors.textMuted} />
-              <Text style={{
-                fontSize:   15,
-                fontWeight: '600',
-                color:      leg.city ? colors.textPrimary : colors.textMuted,
-                marginLeft: 8,
-                flex:       1,
-              }}>
-                {leg.city ? leg.city.name : 'Pick a city'}
-              </Text>
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                {leg.place ? (
+                  <>
+                    <Text
+                      style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}
+                      numberOfLines={1}
+                    >
+                      {leg.place.name}
+                    </Text>
+                    <Text
+                      style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}
+                      numberOfLines={1}
+                    >
+                      {leg.place.formattedAddress}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textMuted }}>
+                    Pick a destination
+                  </Text>
+                )}
+              </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* Dates */}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.dateLabel, { color: colors.textMuted }]}>ARRIVE</Text>
@@ -276,10 +277,9 @@ export default function NewTripScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Footer CTA */}
       <View style={[styles.footer, {
-        backgroundColor: colors.background,
-        borderTopColor:  colors.border,
+        backgroundColor:  colors.background,
+        borderTopColor:   colors.border,
         paddingHorizontal: spacing.screen,
       }]}>
         <TouchableOpacity
@@ -307,64 +307,16 @@ export default function NewTripScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* City picker modal */}
-      <Modal
-        visible={cityPickerForLeg !== null}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setCityPickerForLeg(null)}
-      >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <View style={{
-            backgroundColor:    colors.background,
-            borderTopLeftRadius:  24,
-            borderTopRightRadius: 24,
-            paddingTop:         8,
-            paddingBottom:      32,
-            maxHeight:          '70%',
-          }}>
-            <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.screen, paddingBottom: 12 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textPrimary }}>
-                Pick a city
-              </Text>
-              <TouchableOpacity onPress={() => setCityPickerForLeg(null)} hitSlop={12}>
-                <Ionicons name="close" size={22} color={colors.textPrimary} />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={UK_CITIES}
-              keyExtractor={c => c.slug}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    if (cityPickerForLeg !== null) {
-                      updateLeg(cityPickerForLeg, { city: item })
-                    }
-                    setCityPickerForLeg(null)
-                  }}
-                  style={{
-                    paddingHorizontal: spacing.screen,
-                    paddingVertical:   14,
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textPrimary }}>
-                    {item.name}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
-                    {item.country}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+      <PlacePicker
+        visible={pickerForLeg !== null}
+        onClose={() => setPickerForLeg(null)}
+        onPick={(place) => {
+          if (pickerForLeg !== null) {
+            updateLeg(pickerForLeg, { place })
+          }
+          setPickerForLeg(null)
+        }}
+      />
     </SafeAreaView>
   )
 }
@@ -386,8 +338,8 @@ const styles = StyleSheet.create({
     marginBottom:  8,
   },
   input: {
-    fontSize:        15,
-    fontWeight:      '600',
+    fontSize:          15,
+    fontWeight:        '600',
     paddingHorizontal: 14,
     paddingVertical:   12,
     borderWidth:       1,
@@ -403,7 +355,7 @@ const styles = StyleSheet.create({
     alignItems:     'center',
     marginBottom:   10,
   },
-  cityPickerBtn: {
+  pickerBtn: {
     flexDirection:    'row',
     alignItems:       'center',
     paddingHorizontal: 12,
@@ -426,14 +378,14 @@ const styles = StyleSheet.create({
     borderRadius:      8,
   },
   addLegBtn: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    justifyContent:    'center',
-    paddingVertical:   12,
-    borderWidth:       1,
-    borderStyle:       'dashed',
-    borderRadius:      10,
-    marginTop:         4,
+    flexDirection:    'row',
+    alignItems:       'center',
+    justifyContent:   'center',
+    paddingVertical:  12,
+    borderWidth:      1,
+    borderStyle:      'dashed',
+    borderRadius:     10,
+    marginTop:        4,
   },
   footer: {
     borderTopWidth:  1,

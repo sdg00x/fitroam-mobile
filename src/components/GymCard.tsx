@@ -29,13 +29,15 @@ export interface GymData {
 }
 
 interface Props {
-  gym:       GymData
-  variant?:  'featured' | 'compact'
-  onGoHere?: (gym: GymData) => void
-  onPress?:  (gym: GymData) => void
+  gym:           GymData
+  variant?:      'featured' | 'compact'
+  onGoHere?:     (gym: GymData) => void
+  onPress?:      (gym: GymData) => void
+  planningMode?: boolean
+  onSaveToTrip?: (gym: GymData) => void
 }
 
-export function GymCard({ gym, variant = 'featured', onGoHere, onPress }: Props) {
+export function GymCard({ gym, variant = 'featured', onGoHere, onPress, planningMode, onSaveToTrip }: Props) {
   const { colors, spacing, radius } = useTheme()
 
   if (variant === 'compact') {
@@ -202,7 +204,7 @@ export function GymCard({ gym, variant = 'featured', onGoHere, onPress }: Props)
           ) : null}
         </View>
         <TouchableOpacity
-          onPress={() => onGoHere?.(gym)}
+          onPress={() => planningMode ? onSaveToTrip?.(gym) : onGoHere?.(gym)}
           activeOpacity={0.8}
           style={[styles.goBtn, {
             backgroundColor: colors.accent,
@@ -216,9 +218,10 @@ export function GymCard({ gym, variant = 'featured', onGoHere, onPress }: Props)
             textTransform: 'uppercase',
             letterSpacing: 0.5,
           }}>
-            I'm going
+            {planningMode ? 'Save to trip' : "I'm going"}
           </Text>
         </TouchableOpacity>
+        
       </View>
     </TouchableOpacity>
   )

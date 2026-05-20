@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import {
   View, Text, ScrollView,
-  TouchableOpacity, ActivityIndicator, StyleSheet,
+  TouchableOpacity, ActivityIndicator, StyleSheet, Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
 import { useLocation } from '../../src/hooks/useLocation'
 import { GymCard, GymData } from '../../src/components/GymCard'
@@ -22,10 +22,28 @@ const SORT_OPTIONS = [
 ]
 
 export default function ExploreScreen() {
-  const { colors, spacing }                         = useTheme()
-  const { lat, lng, cityName, loading: locLoading } = useLocation()
-  const router                                      = useRouter()
-  const { profile, loading: profileLoading }        = useProfile()
+  const { colors, spacing }                            = useTheme()
+  const { lat: gpsLat, lng: gpsLng, cityName: gpsCity, loading: locLoading } = useLocation()
+  const router                                         = useRouter()
+  const { profile, loading: profileLoading }           = useProfile()
+
+  // Planning-mode params (set when user taps "Plan this leg" on Trip Detail)
+  const params = useLocalSearchParams<{
+    planningTripId?:   string
+    planningLegId?:    string
+    planningTripName?: string
+    planningLegOrder?: string
+    planningCity?:     string
+    planningLat?:      string
+    planningLng?:      string
+  }>()
+
+  const planningMode = !!params.planningTripId && !!params.planningLegId
+
+  // Use planning leg's coordinates when in planning mode, otherwise GPS
+  const lat       = planningMode && params.planningLat ? parseFloat(params.planningLat) : gpsLat
+  const lng       = planningMode && params.planningLng ? parseFloat(params.planningLng) : gpsLng
+  const cityName  = planningMode ? params.planningCity : gpsCity
 
   const [gyms,         setGyms]         = useState<GymData[]>([])
   const [loading,      setLoading]      = useState(true)
@@ -126,6 +144,34 @@ const params = new URLSearchParams({
     },
   })
 }
+  async function handleSaveToTrip(gym: GymData) {
+    if (!planningMode || !params.planningTripId || !params.planningLegId) return
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/trips/${params.planningTripId}/legs/${params.planningLegId}/gyms`,
+        {
+          method:  'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id':    'seed_user_placeholder',
+          },
+          body: JSON.stringify({
+            gymId:      gym.id,
+            matchScore: gym.matchScore,
+          }),
+        }
+      )
+      if (!res.ok) throw new Error(`API ${res.status}`)
+
+      // Brief confirmation, then back to Trip Detail
+      Alert.alert('Saved', `${gym.name} added to ${params.planningTripName || 'your trip'}.`, [
+        { text: 'OK', onPress: () => router.back() },
+      ])
+    } catch (err) {
+      Alert.alert('Could not save', 'Try again.')
+    }
+  }
 
   const topGym     = gyms[0]
   const nearbyGyms = gyms.slice(1)
@@ -133,11 +179,55 @@ const params = new URLSearchParams({
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
+      
+      {/* Planning mode banner */}
+      {planningMode && (
+        <View style={{
+          backgroundColor:   colors.accent,
+          paddingHorizontal: spacing.screen,
+          paddingVertical:   10,
+          flexDirection:     'row',
+          alignItems:        'center',
+          justifyContent:    'space-between',
+        }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize:      10,
+              fontWeight:    '800',
+              color:         colors.accentText,
+              letterSpacing: 1,
+              opacity:       0.7,
+            }}>
+              PLANNING MODE
+            </Text>
+            <Text style={{
+              fontSize:   13,
+              fontWeight: '700',
+              color:      colors.accentText,
+              marginTop:  2,
+            }}>
+              Leg {params.planningLegOrder || ''} of {params.planningTripName || 'your trip'}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+            <Text style={{
+              fontSize:      11,
+              fontWeight:    '800',
+              color:         colors.accentText,
+              letterSpacing: 0.5,
+            }}>
+              EXIT ✕
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Hero */}
       <View style={[styles.hero, {
         backgroundColor:   colors.heroBackground,
         paddingHorizontal: spacing.screen,
       }]}>
+
         <Text style={{
           fontSize:      11,
           color:         colors.textMuted,
@@ -149,24 +239,23 @@ const params = new URLSearchParams({
           You're in
         </Text>
         <Text style={{
-          fontSize:      28,
+          fontSize:      32,
           fontWeight:    '800',
           color:         colors.textPrimary,
           letterSpacing: -1,
-          lineHeight:    30,
+          lineHeight:    34,
         }}>
           {locLoading ? 'Locating...' : cityName}
-          <Text style={{ color: colors.accent }}> ·</Text>
         </Text>
         <Text style={{
           fontSize:  13,
-          color:     colors.textMuted,
-          marginTop: 4,
+          color:     colors.textSecondary,
+          marginTop: 6,
         }}>
           {gyms.length > 0
-            ? <Text style={{ color: colors.accent }}>{gyms.length} gyms</Text>
-            : <Text style={{ color: colors.textMuted }}>Finding gyms</Text>
-          }{' '}match your training
+            ? `${gyms.length} gyms match your training`
+            : 'Finding gyms'
+          }
         </Text>
       </View>
 
@@ -188,23 +277,23 @@ const params = new URLSearchParams({
             onPress={() => setActiveSort(opt.key)}
             activeOpacity={0.75}
             style={{
-              paddingHorizontal: 13,
-              paddingVertical:   6,
+              paddingHorizontal: 14,
+              paddingVertical:   7,
               borderRadius:      100,
               borderWidth:       1,
               borderColor:       activeSort === opt.key
-                ? colors.accent
+                ? colors.textPrimary
                 : colors.border,
               backgroundColor:   activeSort === opt.key
-                ? colors.accent
-                : colors.surfaceRaised,
+                ? colors.textPrimary
+                : 'transparent',
             }}
           >
             <Text style={{
               fontSize:   11,
               fontWeight: '700',
               color:      activeSort === opt.key
-                ? colors.accentText
+                ? colors.background
                 : colors.textSecondary,
             }}>
               {opt.label}
@@ -301,6 +390,8 @@ const params = new URLSearchParams({
                 variant="featured"
                 onPress={handleGymPress}
                 onGoHere={handleGymPress}
+                planningMode={planningMode}
+                onSaveToTrip={handleSaveToTrip}
               />
             </>
           )}
@@ -315,7 +406,10 @@ const params = new URLSearchParams({
                   gym={gym}
                   variant="compact"
                   onPress={handleGymPress}
+                  planningMode={planningMode}
+                  onSaveToTrip={handleSaveToTrip}
                 />
+                
               ))}
             </>
           )}
