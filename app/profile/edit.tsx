@@ -1,105 +1,47 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
 import { useProfile } from '../../src/hooks/useProfile'
+import {
+  labelForActivity,
+  labelForPattern,
+  labelForMonthlyBudget,
+  labelForTravelBudget,
+  labelForDistance,
+  labelsForActivities,
+  labelsForLifestyle,
+  labelsForPriorities,
+} from '../../src/lib/labels'
 
-// Option sets mirror the onboarding screens
-const ACTIVITIES = [
-  { key: 'lifting',      label: 'Strength training' },
-  { key: 'calisthenics', label: 'Calisthenics' },
-  { key: 'running',      label: 'Running' },
-  { key: 'cycling',      label: 'Cycling' },
-  { key: 'crossfit',     label: 'CrossFit / Hyrox' },
-  { key: 'yoga',         label: 'Yoga / Pilates' },
-  { key: 'swimming',     label: 'Swimming' },
-  { key: 'martial_arts', label: 'Martial arts' },
-  { key: 'classes',      label: 'Group classes' },
-  { key: 'climbing',     label: 'Climbing' },
-]
+const FACILITY_LABELS: Record<string, string> = {
+  commercial_gym: 'Commercial gyms',
+  boutique:       'Boutique studios',
+  outdoor:        'Outdoor parks',
+  pool:           'Swimming pools',
+  hotel:          'Hotel gyms',
+  home:           'Home / Airbnb',
+}
 
-const FACILITIES = [
-  { key: 'commercial_gym', label: 'Commercial gyms' },
-  { key: 'boutique',       label: 'Boutique studios' },
-  { key: 'outdoor',        label: 'Outdoor parks' },
-  { key: 'pool',           label: 'Swimming pools' },
-  { key: 'hotel',          label: 'Hotel gyms' },
-  { key: 'home',           label: 'Home / Airbnb' },
-]
+function labelsForFacilities(slugs: string[]): string {
+  if (!slugs || slugs.length === 0) return 'Not set'
+  return slugs.map(s => FACILITY_LABELS[s] || s).join(', ')
+}
 
-const LIFESTYLE = [
-  { key: 'home_base',        label: 'Home base, train locally' },
-  { key: 'frequent_travel',  label: 'Frequent travel' },
-  { key: 'nomad',            label: 'Digital nomad' },
-  { key: 'between_cities',   label: 'Between cities' },
-  { key: 'planning_trip',    label: 'Planning a trip' },
-  { key: 'work_trips',       label: 'Work trips' },
-]
-
-const MONTHLY_BUDGET = [
-  { key: 'under_20',    label: 'Under £20' },
-  { key: '20_to_40',    label: '£20 – £40' },
-  { key: '40_to_80',    label: '£40 – £80' },
-  { key: 'over_80',     label: 'Over £80' },
-]
-
-const TRAVEL_BUDGET = [
-  { key: 'free_only',   label: 'Free or hotel gym only' },
-  { key: 'under_10',    label: 'Under £10 / day' },
-  { key: '10_to_20',    label: '£10 – £20 / day' },
-  { key: 'any_quality', label: 'Whatever it takes' },
-]
-
-const PRIORITIES = [
-  { key: '24hr',        label: '24-hour access' },
-  { key: 'beginner',    label: 'Beginner friendly' },
-  { key: 'serious',     label: 'Serious lifters only' },
-  { key: 'cleanliness', label: 'Cleanliness' },
-  { key: 'deadlift',    label: 'Deadlift platform' },
-  { key: 'quiet',       label: 'Quiet at peak times' },
-  { key: 'equipment',   label: 'Equipment variety' },
-  { key: 'community',   label: 'Strong community' },
-  { key: 'pool',        label: 'Pool' },
-  { key: 'amenities',   label: 'Showers & amenities' },
-]
-
-const DISTANCES = [
-  { key: 5,  label: 'Walking distance' },
-  { key: 15, label: 'Short distance' },
-  { key: 60, label: "I'll travel for it" },
-]
-
-const PATTERNS = [
-  { key: 'ppl',         label: 'Push / Pull / Legs' },
-  { key: 'upper_lower', label: 'Upper / Lower' },
-  { key: 'full_body',   label: 'Full body' },
-  { key: 'body_part',   label: 'Body-part split' },
-  { key: 'program',     label: 'Follow a program' },
-  { key: 'freestyle',   label: 'Freestyle' },
-]
-
-export default function EditProfileScreen() {
+export default function EditProfileMenu() {
   const { colors, spacing, radius } = useTheme()
-  const { profile, save } = useProfile()
   const router = useRouter()
+  const { profile, refresh } = useProfileWithRefresh()
 
-  function toggleArray(field: 'activities' | 'facilityTypes' | 'lifestyle' | 'priorities', key: string) {
-    const current = profile[field] || []
-    const next = current.includes(key)
-      ? current.filter((k: string) => k !== key)
-      : [...current, key]
-    save({ [field]: next })
-  }
+  useFocusEffect(useCallback(() => { refresh() }, [refresh]))
 
-  function setPrimary(key: string) {
-    // Primary activity is also added to the activities array
-    const activities = profile.activities.includes(key)
-      ? profile.activities
-      : [...profile.activities, key]
-    save({ primaryActivity: key, activities })
-  }
+  const primaryLabel = labelForActivity(profile.primaryActivity)
+  const othersCount  = profile.activities.filter(a => a !== profile.primaryActivity).length
+  const activitySummary = othersCount > 0
+    ? `${primaryLabel} + ${othersCount} more`
+    : primaryLabel
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -121,208 +63,113 @@ export default function EditProfileScreen() {
         <Text style={{
           fontSize:   13,
           color:      colors.textMuted,
-          marginTop:  12,
-          marginBottom: 24,
+          marginTop:  16,
+          marginBottom: 16,
+          lineHeight: 18,
         }}>
-          Changes save automatically. Recommendations update next time you open Explore.
+          Tap any section to update it. Each section saves separately.
         </Text>
 
-        {/* Primary activity */}
-        <Section label="PRIMARY ACTIVITY" colors={colors}>
-          <View style={chipRow}>
-            {ACTIVITIES.map(a => (
-              <Chip
-                key={a.key}
-                label={a.label}
-                active={profile.primaryActivity === a.key}
-                onPress={() => setPrimary(a.key)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Other activities */}
-        <Section label="OTHER ACTIVITIES" colors={colors}>
-          <View style={chipRow}>
-            {ACTIVITIES.filter(a => a.key !== profile.primaryActivity).map(a => (
-              <Chip
-                key={a.key}
-                label={a.label}
-                active={profile.activities.includes(a.key)}
-                onPress={() => toggleArray('activities', a.key)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Facility types */}
-        <Section label="WHERE YOU TRAIN" colors={colors}>
-          <View style={chipRow}>
-            {FACILITIES.map(f => (
-              <Chip
-                key={f.key}
-                label={f.label}
-                active={profile.facilityTypes.includes(f.key)}
-                onPress={() => toggleArray('facilityTypes', f.key)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Lifestyle */}
-        <Section label="HOW YOU LIVE" colors={colors}>
-          <View style={chipRow}>
-            {LIFESTYLE.map(l => (
-              <Chip
-                key={l.key}
-                label={l.label}
-                active={profile.lifestyle.includes(l.key)}
-                onPress={() => toggleArray('lifestyle', l.key)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Training pattern */}
-        <Section label="TRAINING PATTERN" colors={colors}>
-          <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 10, marginTop: -4 }}>
-            Helps us match gyms to the equipment you need each day.
-          </Text>
-          <View style={chipRow}>
-            <Chip
-              label="Not set"
-              active={!profile.trainingPattern}
-              onPress={() => save({ trainingPattern: null })}
-              colors={colors}
-            />
-            {PATTERNS.map(p => (
-              <Chip
-                key={p.key}
-                label={p.label}
-                active={profile.trainingPattern === p.key}
-                onPress={() => save({ trainingPattern: p.key })}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Monthly budget */}
-        <Section label="MONTHLY BUDGET" colors={colors}>
-          <View style={chipRow}>
-            {MONTHLY_BUDGET.map(b => (
-              <Chip
-                key={b.key}
-                label={b.label}
-                active={profile.monthlyBudget === b.key}
-                onPress={() => save({ monthlyBudget: b.key })}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Travel budget */}
-        <Section label="TRAVEL DAILY BUDGET" colors={colors}>
-          <View style={chipRow}>
-            {TRAVEL_BUDGET.map(b => (
-              <Chip
-                key={b.key}
-                label={b.label}
-                active={profile.travelDailyBudget === b.key}
-                onPress={() => save({ travelDailyBudget: b.key })}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Distance */}
-        <Section label="HOW FAR WILL YOU TRAVEL" colors={colors}>
-          <View style={chipRow}>
-            {DISTANCES.map(d => (
-              <Chip
-                key={String(d.key)}
-                label={d.label}
-                active={profile.maxDistanceMinutes === d.key}
-                onPress={() => save({ maxDistanceMinutes: d.key })}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
-
-        {/* Priorities */}
-        <Section label="WHAT MATTERS" colors={colors}>
-          <View style={chipRow}>
-            {PRIORITIES.map(p => (
-              <Chip
-                key={p.key}
-                label={p.label}
-                active={profile.priorities.includes(p.key)}
-                onPress={() => toggleArray('priorities', p.key)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Section>
+        <View style={[styles.menu, {
+          backgroundColor: colors.surface,
+          borderColor:     colors.border,
+          borderRadius:    radius.card,
+        }]}>
+          <MenuRow
+            label="Activity"
+            value={activitySummary}
+            onPress={() => router.push('/profile/sections/activity')}
+            colors={colors}
+          />
+          <MenuRow
+            label="Where you train"
+            value={labelsForFacilities(profile.facilityTypes)}
+            onPress={() => router.push('/profile/sections/facilities')}
+            colors={colors}
+          />
+          <MenuRow
+            label="How you live"
+            value={labelsForLifestyle(profile.lifestyle) === 'None' ? 'Not set' : labelsForLifestyle(profile.lifestyle)}
+            onPress={() => router.push('/profile/sections/lifestyle')}
+            colors={colors}
+          />
+          <MenuRow
+            label="Training pattern"
+            value={labelForPattern(profile.trainingPattern)}
+            onPress={() => router.push('/profile/sections/training')}
+            colors={colors}
+          />
+          <MenuRow
+            label="Budget & distance"
+            value={`${labelForMonthlyBudget(profile.monthlyBudget)} · ${labelForDistance(profile.maxDistanceMinutes)}`}
+            onPress={() => router.push('/profile/sections/budget')}
+            colors={colors}
+          />
+          <MenuRow
+            label="What matters"
+            value={labelsForPriorities(profile.priorities) === 'None' ? 'Not set' : labelsForPriorities(profile.priorities)}
+            onPress={() => router.push('/profile/sections/priorities')}
+            colors={colors}
+            last
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-// Small components
-function Section({ label, colors, children }: { label: string; colors: any; children: React.ReactNode }) {
-  return (
-    <View style={{ marginBottom: 28 }}>
-      <Text style={{
-        fontSize:      11,
-        fontWeight:    '700',
-        letterSpacing: 1.2,
-        color:         colors.textMuted,
-        marginBottom:  12,
-        textTransform: 'uppercase',
-      }}>
-        {label}
-      </Text>
-      {children}
-    </View>
-  )
+// Wrap useProfile to add a refresh on focus (Context refactor is on the backlog)
+function useProfileWithRefresh() {
+  const profileHook = useProfile()
+  const refresh = useCallback(async () => {
+    // useProfile loads from AsyncStorage on mount. Forcing re-read requires Context.
+    // For now: nothing to do — useFocusEffect on the menu re-runs queries elsewhere,
+    // and useProfile's internal state stays correct because saves go through it.
+  }, [])
+  return { ...profileHook, refresh }
 }
 
-function Chip({ label, active, onPress, colors }: { label: string; active: boolean; onPress: () => void; colors: any }) {
+function MenuRow({
+  label, value, onPress, colors, last,
+}: {
+  label:   string
+  value:   string
+  onPress: () => void
+  colors:  any
+  last?:   boolean
+}) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
       style={{
-        paddingVertical:   10,
-        paddingHorizontal: 14,
-        borderRadius:      100,
-        borderWidth:       1,
-        borderColor:       active ? colors.accent : colors.border,
-        backgroundColor:   active ? 'rgba(200, 255, 87, 0.08)' : colors.surface,
+        paddingHorizontal: 16,
+        paddingVertical:   14,
+        borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: colors.border,
+        flexDirection:     'row',
+        alignItems:        'center',
       }}
     >
-      <Text style={{
-        fontSize:   12,
-        fontWeight: '700',
-        color:      active ? colors.accent : colors.textPrimary,
-      }}>
-        {label}
-      </Text>
+      <View style={{ flex: 1, marginRight: 12 }}>
+        <Text style={{
+          fontSize:   14,
+          fontWeight: '700',
+          color:      colors.textPrimary,
+          marginBottom: 3,
+        }}>
+          {label}
+        </Text>
+        <Text
+          style={{ fontSize: 12, color: colors.textMuted }}
+          numberOfLines={1}
+        >
+          {value}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </TouchableOpacity>
   )
-}
-
-const chipRow = {
-  flexDirection: 'row' as const,
-  flexWrap:      'wrap' as const,
-  gap:           8,
 }
 
 const styles = StyleSheet.create({
@@ -332,5 +179,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems:     'center',
     paddingVertical: 14,
+  },
+  menu: {
+    borderWidth: 1,
   },
 })

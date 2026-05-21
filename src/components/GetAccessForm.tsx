@@ -7,29 +7,44 @@ import { useTheme } from '../theme/useTheme'
 import { useUser, isValidEmail, isValidUKPhone, isValidName } from '../hooks/useUser'
 
 interface Props {
-  mode:        'access' | 'signup'  // changes the copy
-  contextName?: string              // gym name, trip name, etc — shown if 'access' mode
-  onComplete:  () => void           // called after successful signup
-  onCancel?:   () => void
+  mode:         'access' | 'signup' | 'update'
+  contextName?: string
+  onComplete:   () => void
+  onCancel?:    () => void
 }
 
 export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props) {
   const { colors, spacing, radius } = useTheme()
-  const { signUp } = useUser()
+  const { user, signUp, update } = useUser()
 
-  const [name,  setName]  = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
+  const [name,  setName]  = useState(mode === 'update' && user ? user.name  : '')
+  const [email, setEmail] = useState(mode === 'update' && user ? user.email : '')
+  const [phone, setPhone] = useState(mode === 'update' && user ? user.phone : '')
   const [submitting, setSubmitting] = useState(false)
 
-  const eyebrow = mode === 'access' ? 'GET ACCESS' : 'CREATE ACCOUNT'
-  const title   = mode === 'access'
-    ? (contextName ? `One step before ${contextName}` : 'A few details to get you in')
-    : 'Save your spot in FitRoam'
-  const subtitle = mode === 'access'
-    ? 'We need a way to reach you about your access. Stays private.'
-    : 'So your trips and saved gyms stay with you across devices.'
-  const cta = mode === 'access' ? 'CONTINUE' : 'CREATE ACCOUNT'
+  const eyebrow =
+    mode === 'access' ? 'GET ACCESS' :
+    mode === 'update' ? 'EDIT DETAILS' :
+    'CREATE ACCOUNT'
+
+  const title =
+    mode === 'access'
+      ? (contextName ? `One step before ${contextName}` : 'A few details to get you in')
+      : mode === 'update'
+      ? 'Your details'
+      : 'Save your spot in FitRoam'
+
+  const subtitle =
+    mode === 'access'
+      ? 'We need a way to reach you about your access. Stays private.'
+      : mode === 'update'
+      ? 'Update your name, email, or phone. Changes save instantly.'
+      : 'So your trips and saved gyms stay with you across devices.'
+
+  const cta =
+    mode === 'access' ? 'CONTINUE' :
+    mode === 'update' ? 'SAVE CHANGES' :
+    'CREATE ACCOUNT'
 
   async function handleSubmit() {
     if (!isValidName(name)) {
@@ -47,7 +62,11 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
 
     try {
       setSubmitting(true)
-      await signUp({ name, email, phone })
+      if (mode === 'update') {
+        await update({ name, email, phone })
+      } else {
+        await signUp({ name, email, phone })
+      }
       onComplete()
     } catch (err) {
       Alert.alert('Could not save', 'Try again.')
@@ -98,7 +117,6 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
           {subtitle}
         </Text>
 
-        {/* Name */}
         <Field label="YOUR NAME" colors={colors}>
           <TextInput
             value={name}
@@ -116,7 +134,6 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
           />
         </Field>
 
-        {/* Email */}
         <Field label="EMAIL" colors={colors}>
           <TextInput
             value={email}
@@ -135,7 +152,6 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
           />
         </Field>
 
-        {/* Phone */}
         <Field label="PHONE (UK)" colors={colors}>
           <TextInput
             value={phone}
@@ -164,7 +180,6 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
 
         <View style={{ flex: 1 }} />
 
-        {/* Submit */}
         <TouchableOpacity
           onPress={handleSubmit}
           activeOpacity={0.85}

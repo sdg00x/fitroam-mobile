@@ -59,6 +59,13 @@ export function useUser() {
     return next
   }, [user])
 
+  const refresh = useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEY)
+      setUser(raw ? JSON.parse(raw) : null)
+    } catch {}
+  }, [])
+
   const signOut = useCallback(async () => {
     setUser(null)
     await AsyncStorage.removeItem(STORAGE_KEY)
@@ -71,6 +78,7 @@ export function useUser() {
     signUp,
     update,
     signOut,
+    refresh,
   }
 }
 
