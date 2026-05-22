@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -8,6 +8,7 @@ import { useTheme } from '../../src/theme/useTheme'
 import { useProfile } from '../../src/hooks/useProfile'
 import { useUser } from '../../src/hooks/useUser'
 import { useStats } from '../../src/hooks/useStats'
+import { GetAccessForm } from '../../src/components/GetAccessForm'
 import {
   labelForActivity,
   labelForPattern,
@@ -28,6 +29,7 @@ export default function ProfileScreen() {
   const router = useRouter()
 
   const [tripCount, setTripCount] = useState(0)
+  const [showSignup, setShowSignup] = useState(false)
 
   // Refetch stats + trip count whenever the tab is focused
   useFocusEffect(useCallback(() => {
@@ -85,8 +87,8 @@ export default function ProfileScreen() {
       >
         {/* Identity card */}
         <TouchableOpacity
-          onPress={() => user && router.push("/profile/identity")}
-          activeOpacity={user ? 0.8 : 1}
+          onPress={() => user ? router.push("/profile/identity") : setShowSignup(true)}
+          activeOpacity={0.8}
           style={[styles.identity, {
           backgroundColor: colors.surface,
           borderColor:     colors.border,
@@ -124,7 +126,7 @@ export default function ProfileScreen() {
             )}
             {!user && (
               <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 4, lineHeight: 16 }}>
-                Tap "Get access" on any gym to create your account.
+                Create an account to save your profile and trips.
               </Text>
             )}
           </View>
@@ -239,6 +241,22 @@ export default function ProfileScreen() {
           />
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showSignup}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowSignup(false)}
+      >
+        <GetAccessForm
+          mode="signup"
+          onClose={() => setShowSignup(false)}
+          onComplete={() => {
+            setShowSignup(false)
+            refreshUser()
+          }}
+        />
+      </Modal>
     </SafeAreaView>
   )
 }

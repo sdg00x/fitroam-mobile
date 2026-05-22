@@ -7,16 +7,12 @@ import { SectionPage } from '../../../src/components/SectionPage'
 import { ChipGrid, Chip } from '../../../src/components/ProfileChips'
 
 const ACTIVITIES = [
-  { key: 'lifting',      label: 'Strength training' },
-  { key: 'calisthenics', label: 'Calisthenics' },
-  { key: 'running',      label: 'Running' },
-  { key: 'cycling',      label: 'Cycling' },
-  { key: 'crossfit',     label: 'CrossFit / Hyrox' },
-  { key: 'yoga',         label: 'Yoga / Pilates' },
-  { key: 'swimming',     label: 'Swimming' },
-  { key: 'martial_arts', label: 'Martial arts' },
-  { key: 'classes',      label: 'Group classes' },
-  { key: 'climbing',     label: 'Climbing' },
+  { key: 'staying_in_shape', label: 'Staying in shape' },
+  { key: 'lifting',          label: 'Lifting' },
+  { key: 'powerlifting',     label: 'Powerlifting' },
+  { key: 'bodybuilding',     label: 'Bodybuilding' },
+  { key: 'crossfit',         label: 'CrossFit / Hyrox' },
+  { key: 'calisthenics',     label: 'Calisthenics' },
 ]
 
 export default function ActivitySection() {

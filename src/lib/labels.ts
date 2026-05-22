@@ -2,16 +2,12 @@
 // Single source of truth so every screen shows the same language for the same value.
 
 const ACTIVITIES: Record<string, string> = {
-  lifting:      'Strength training',
-  calisthenics: 'Calisthenics',
-  running:      'Running',
-  cycling:      'Cycling',
-  crossfit:     'CrossFit / Hyrox',
-  yoga:         'Yoga',
-  swimming:     'Swimming',
-  martial_arts: 'Martial arts',
-  classes:      'Group classes',
-  climbing:     'Climbing',
+  lifting:          'Lifting',
+  staying_in_shape: 'Staying in shape',
+  powerlifting:     'Powerlifting',
+  bodybuilding:     'Bodybuilding',
+  crossfit:         'CrossFit / Hyrox',
+  calisthenics:     'Calisthenics',
 }
 
 const LIFESTYLE: Record<string, string> = {

@@ -7,13 +7,12 @@ import { useTheme } from '../../src/theme/useTheme'
 import { useProfile } from '../../src/hooks/useProfile'
 
 const ACTIVITIES = [
-  { key: 'Staying Active',        label: 'Staying Active',          icon: 'pulse' },
-  { key: 'lifting',      label: 'Lifting heavy',     icon: 'barbell' },
-  { key: 'running',      label: 'Running',            icon: 'flame' },
-  { key: 'calisthenics', label: 'Calisthenics',   icon: 'body-outline' },
-  { key: 'crossfit',     label: 'CrossFit',       icon: 'fitness' },
-  { key: 'Cycling',        label: 'Cycling',          icon: 'bicycle-outline' },
-  { key: 'yoga',         label: ' Pilates', icon: 'leaf' },
+  { key: 'staying_in_shape', label: 'Staying in shape', icon: 'heart-outline' },
+  { key: 'lifting',          label: 'Lifting',          icon: 'barbell' },
+  { key: 'powerlifting',     label: 'Powerlifting',     icon: 'trending-up' },
+  { key: 'bodybuilding',     label: 'Bodybuilding',     icon: 'body' },
+  { key: 'crossfit',         label: 'CrossFit / Hyrox', icon: 'fitness' },
+  { key: 'calisthenics',     label: 'Calisthenics',     icon: 'body-outline' },
 ] as const
 
 export default function ActivitiesScreen() {
@@ -34,7 +33,7 @@ export default function ActivitiesScreen() {
       primaryActivity: selected[0],
       activities:      selected,
     })
-    router.push('/onboarding/facilities')
+    router.push('/onboarding/lifestyle')
   }
 
   return (
