@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -25,7 +25,7 @@ export default function HomeScreen() {
 
   const { weather, loading: weatherLoading, error: weatherError } = useWeather(lat, lng)
   const { trip: nextTrip, daysAway, legCount, nightCount, refresh: refreshTrip } = useNextTrip()
-  const { gym: topGym } = useTopMatch(lat, lng)
+  const { gym: topGym, loading: topLoading } = useTopMatch(lat, lng)
   const { sessions, cities, visits, refresh: refreshStats } = useStats()
 
   // City labels for passport pills
@@ -245,9 +245,24 @@ export default function HomeScreen() {
         </View>
 
         {/* Top match today */}
-        {topGym && (
+        {(topGym || topLoading) && (
           <View style={[styles.section, { paddingHorizontal: spacing.screen }]}>
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TOP MATCH TODAY</Text>
+            {!topGym && topLoading ? (
+              <View style={[styles.gymCard, {
+                backgroundColor: colors.surface,
+                borderColor:     colors.border,
+                borderRadius:    16,
+              }]}>
+                <View style={[styles.gymImagePlaceholder, { opacity: 0.4 }]} />
+                <View style={styles.gymInfoRow}>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ height: 14, backgroundColor: colors.border, borderRadius: 4, opacity: 0.5, marginBottom: 6, width: "70%" }} />
+                    <View style={{ height: 10, backgroundColor: colors.border, borderRadius: 4, opacity: 0.3, width: "50%" }} />
+                  </View>
+                </View>
+              </View>
+            ) : topGym ? (
             <TouchableOpacity
               onPress={() => router.push(`/gym/${topGym.id}`)}
               activeOpacity={0.85}
@@ -258,6 +273,14 @@ export default function HomeScreen() {
               }]}
             >
               <View style={styles.gymImagePlaceholder}>
+                {topGym.photoUrls?.[0] && (
+                  <Image
+                    source={{ uri: topGym.photoUrls[0] }}
+                    style={StyleSheet.absoluteFillObject}
+                    resizeMode="cover"
+                  />
+                )}
+                <View style={styles.gymImageScrim} />
                 <View style={[styles.gymScorePill, { backgroundColor: colors.accent }]}>
                   <Text style={{ fontSize: 12, fontWeight: '800', color: colors.accentText, letterSpacing: -0.1 }}>
                     {topGym.matchScore}
@@ -288,6 +311,7 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </TouchableOpacity>
+            ) : null}
           </View>
         )}
 
@@ -445,6 +469,10 @@ const styles = StyleSheet.create({
   gymCard: {
     borderWidth: 1,
     overflow:    'hidden',
+  },
+  gymImageScrim: {
+    ...StyleSheet.absoluteFillObject as any,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   gymImagePlaceholder: {
     height:         100,

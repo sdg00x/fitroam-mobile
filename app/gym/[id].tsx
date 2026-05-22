@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View, Text, ScrollView,
   TouchableOpacity, StyleSheet, Image, Modal, Platform,
@@ -89,35 +89,72 @@ function getPricingRecommendation(
 }
 
 export default function GymDetailScreen() {
-  const {
-    id, name, address, distanceMinutes, matchScore,
-    priceDisplay, priceSubDisplay, equipmentTags,
-    matchReasons, openNow, rating, ratingCount,
-    dayPassPence, monthlyPence, openingHoursJson, photoUrls, reviews,
-    websiteUrl,
- } = useLocalSearchParams<{
-  id:               string
-  name:             string
-  address:          string
-  distanceMinutes:  string
-  matchScore:       string
-  priceDisplay:     string
-  priceSubDisplay:  string
-  equipmentTags:    string
-  matchReasons:     string
-  openNow:          string
-  rating:           string
-  ratingCount:      string
-  dayPassPence:     string
-  monthlyPence:     string
-  openingHoursJson: string
-  photoUrls:        string
-  reviews:          string
-  websiteUrl:       string
-}>()
-  
-  const photos     = photoUrls ? JSON.parse(photoUrls) : []
-  const gymReviews = reviews   ? JSON.parse(reviews)   : []
+  const params = useLocalSearchParams<{
+    id:               string
+    name?:            string
+    address?:         string
+    distanceMinutes?: string
+    matchScore?:      string
+    priceDisplay?:    string
+    priceSubDisplay?: string
+    equipmentTags?:   string
+    matchReasons?:    string
+    openNow?:         string
+    rating?:          string
+    ratingCount?:     string
+    dayPassPence?:    string
+    monthlyPence?:    string
+    openingHoursJson?: string
+    photoUrls?:       string
+    reviews?:         string
+    websiteUrl?:      string
+  }>()
+
+  const id = params.id
+
+  // Hydrate from API — fills any gaps from navigation params
+  const [apiGym, setApiGym] = useState<any>(null)
+  const [gymLoading, setGymLoading] = useState(true)
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    fetch(`http://192.168.0.64:3000/api/gyms/${id}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { if (!cancelled) setApiGym(data.gym) })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setGymLoading(false) })
+    return () => { cancelled = true }
+  }, [id])
+
+  // Merge — API data wins where available; navigation params fill the rest
+  const name             = apiGym?.name             ?? params.name             ?? ""
+  const address          = apiGym?.address          ?? params.address          ?? ""
+  const distanceMinutes  = params.distanceMinutes   ?? ""
+  const matchScore       = params.matchScore        ?? ""
+  const priceDisplay     = params.priceDisplay      ?? ""
+  const priceSubDisplay  = params.priceSubDisplay   ?? ""
+  const websiteUrl       = apiGym?.websiteUrl       ?? params.websiteUrl       ?? ""
+  const rating           = apiGym?.rating?.toString()      ?? params.rating      ?? ""
+  const ratingCount      = apiGym?.ratingCount?.toString() ?? params.ratingCount ?? ""
+  const openNow          = params.openNow           ?? ""
+
+  const equipmentTags    = params.equipmentTags
+  const matchReasons     = params.matchReasons
+  const dayPassPence     = params.dayPassPence
+  const monthlyPence     = params.monthlyPence
+
+  // openingHours, photos, reviews — use API if it has them; fall back to JSON params
+  const openingHoursJson = params.openingHoursJson
+  const photoUrls        = params.photoUrls
+  const reviews          = params.reviews
+
+  const photos = apiGym?.photoUrls
+    ? apiGym.photoUrls
+    : (photoUrls ? JSON.parse(photoUrls) : [])
+
+  const gymReviews = apiGym?.openingHours?.reviews
+    ? apiGym.openingHours.reviews
+    : (reviews ? JSON.parse(reviews) : [])
   const { colors, spacing, radius } = useTheme()
   const router  = useRouter()
   const { user, isSignedIn } = useUser()
@@ -132,7 +169,7 @@ export default function GymDetailScreen() {
 
   const tags         = equipmentTags    ? JSON.parse(equipmentTags)    : []
   const reasons      = matchReasons     ? JSON.parse(matchReasons)     : []
-  const openingHours = openingHoursJson ? JSON.parse(openingHoursJson) : null
+  const openingHours = apiGym?.openingHours ?? (openingHoursJson ? JSON.parse(openingHoursJson) : null)
   const hoursDisplay = formatHours(openingHours)
   const todayIndex   = new Date().getDay()
 

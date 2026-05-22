@@ -52,7 +52,7 @@ export function useNextTrip(): Result {
           const aArrive = new Date(a.legs[0]?.arriveOn ?? 0).getTime()
           const bArrive = new Date(b.legs[0]?.arriveOn ?? 0).getTime()
           return aArrive - bArrive
-        })))
+        })
       setTrip(upcoming[0] ?? null)
     } catch {
       setTrip(null)

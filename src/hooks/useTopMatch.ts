@@ -25,7 +25,7 @@ export function useTopMatch(lat: number | null, lng: number | null) {
       monthlyBudget:       profile.monthlyBudget,
       travelDailyBudget:   profile.travelDailyBudget,
     })
-    fetch(`${API_BASE}/api/gyms/discover?${params}`)
+    fetch(`${API_BASE}/api/gyms?${params}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => {
         if (cancelled) return
