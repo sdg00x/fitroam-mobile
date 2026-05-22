@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
+import { useUser } from "../../src/hooks/useUser"
 import { useViewingLocation } from '../../src/hooks/useViewingLocation'
 import { PlacePicker } from '../../src/components/PlacePicker'
 import { getServiceCoverage } from '../../src/lib/serviceCoverage'
@@ -171,7 +172,7 @@ const params = new URLSearchParams({
           method:  'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id':    'seed_user_placeholder',
+            'x-user-id': user?.id || 'seed_user_placeholder',
           },
           body: JSON.stringify({
             gymId:      gym.id,

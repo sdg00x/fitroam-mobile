@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useFocusEffect } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
+import { useUser } from "../../src/hooks/useUser"
 import { TripCard, Trip } from '../../src/components/TripCard'
 
 const API_BASE = 'http://192.168.0.64:3000'
@@ -64,6 +65,7 @@ function categorizeTrips(trips: Trip[]): CategorizedTrips {
 
 export default function TripsScreen() {
   const { colors, spacing } = useTheme()
+  const { user } = useUser()
   const router = useRouter()
 
   const [trips,      setTrips]      = useState<Trip[]>([])
@@ -75,7 +77,7 @@ export default function TripsScreen() {
     try {
       setError(null)
       const res = await fetch(`${API_BASE}/api/trips`, {
-        headers: { 'x-user-id': 'seed_user_placeholder' },
+        headers: { "x-user-id": user?.id || "seed_user_placeholder" },
       })
       if (!res.ok) throw new Error(`API ${res.status}`)
       const data = await res.json()

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
+import { useUser } from "../../src/hooks/useUser"
 import { Trip, TripLeg } from '../../src/components/TripCard'
 
 const API_BASE = 'http://192.168.0.64:3000'
@@ -28,6 +29,7 @@ function daysBetween(arriveIso: string, departIso: string): number {
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { colors, spacing, radius } = useTheme()
+  const { user } = useUser()
   const router = useRouter()
 
   const [trip,        setTrip]       = useState<Trip | null>(null)
@@ -41,7 +43,7 @@ export default function TripDetailScreen() {
     try {
       setError(null)
       const res = await fetch(`${API_BASE}/api/trips/${id}`, {
-        headers: { 'x-user-id': 'seed_user_placeholder' },
+        headers: { 'x-user-id': user?.id || 'seed_user_placeholder' },
       })
       if (!res.ok) throw new Error(`API ${res.status}`)
       const data = await res.json()
@@ -68,7 +70,7 @@ export default function TripDetailScreen() {
         method:  'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id':    'seed_user_placeholder',
+          'x-user-id': user?.id || 'seed_user_placeholder',
         },
         body: JSON.stringify({ name: nameDraft.trim() }),
       })
@@ -98,7 +100,7 @@ export default function TripDetailScreen() {
     try {
       const res = await fetch(`${API_BASE}/api/trips/${id}`, {
         method:  'DELETE',
-        headers: { 'x-user-id': 'seed_user_placeholder' },
+        headers: { 'x-user-id': user?.id || 'seed_user_placeholder' },
       })
       if (!res.ok) throw new Error()
       router.back()

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
+import { useUser } from "../../src/hooks/useUser"
 import { PlacePicker, PickedPlace } from '../../src/components/PlacePicker'
 
 const API_BASE = 'http://192.168.0.64:3000'
@@ -25,6 +26,7 @@ const REASONS = [
 
 export default function NewTripScreen() {
   const { colors, spacing, radius } = useTheme()
+  const { user } = useUser()
   const router = useRouter()
 
   const [name,       setName]       = useState('')
@@ -88,7 +90,7 @@ export default function NewTripScreen() {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id':    'seed_user_placeholder',
+          'x-user-id': user?.id || 'seed_user_placeholder',
         },
         body: JSON.stringify({
           name:   effectiveName,
