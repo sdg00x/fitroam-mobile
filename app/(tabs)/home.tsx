@@ -13,6 +13,14 @@ import { useNextTrip } from '../../src/hooks/useNextTrip'
 import { useTopMatch } from '../../src/hooks/useTopMatch'
 import { useStats } from '../../src/hooks/useStats'
 import { computeDailyTraining } from '../../src/lib/training'
+import { useTodaySession } from '../../src/hooks/useTodaySession'
+import { TodaySessionPicker } from '../../src/components/TodaySessionPicker'
+
+function formatEquipmentTag(tag: string): string {
+  return tag
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
 
 export default function HomeScreen() {
   const { colors, spacing, radius } = useTheme()
@@ -50,6 +58,52 @@ export default function HomeScreen() {
   const greeting = greetingFor()
   const firstName = user?.name ? user.name.split(/\s+/)[0] : null
   const today = computeDailyTraining(profile.trainingPattern)
+  const { entry: todayLog, setSession } = useTodaySession()
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  // If user has logged today's session, override the computed values
+  const sessionDetails: Record<string, { label: string; description: string; equipment: string[] }> = {
+    push: {
+      label: "Push day",
+      description: "Chest, shoulders, triceps. Bench, dumbbells, cables.",
+      equipment: ["free_weights", "dumbbells", "cables"],
+    },
+    pull: {
+      label: "Pull day",
+      description: "Back, biceps, rear delts. Bars and cables.",
+      equipment: ["pull_up_bars", "cables", "barbells"],
+    },
+    legs: {
+      label: "Legs day",
+      description: "Quads, hamstrings, glutes. Rack and leg press.",
+      equipment: ["power_rack", "barbells", "free_weights"],
+    },
+    upper: {
+      label: "Upper body",
+      description: "Chest, back, shoulders, arms.",
+      equipment: ["free_weights", "cables", "dumbbells"],
+    },
+    lower: {
+      label: "Lower body",
+      description: "Quads, hamstrings, glutes, calves.",
+      equipment: ["free_weights", "barbells", "machines"],
+    },
+    full_body: {
+      label: "Full body",
+      description: "Compound lifts, every major group.",
+      equipment: ["barbells", "free_weights", "power_rack"],
+    },
+    rest: {
+      label: "Rest day",
+      description: "Mobility and recovery today.",
+      equipment: [],
+    },
+  }
+
+  const override         = todayLog ? sessionDetails[todayLog.session] : null
+  const displayDayLabel  = override?.label       ?? today.dayLabel
+  const displayDesc      = override?.description ?? today.description
+  const displayEquipment = override?.equipment   ?? today.equipment
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -86,7 +140,10 @@ export default function HomeScreen() {
         <View style={[styles.section, { paddingHorizontal: spacing.screen }]}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TODAY'S TRAINING</Text>
           {today.hasPattern ? (
-            <View style={[styles.trainingCard, {
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setPickerOpen(true)}
+              style={[styles.trainingCard, {
               backgroundColor: colors.surface,
               borderColor:     colors.border,
               borderRadius:    18,
@@ -115,9 +172,12 @@ export default function HomeScreen() {
 
               <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 6 }}>
                 <Text style={{ fontSize: 26, fontWeight: '700', color: colors.textPrimary, letterSpacing: -0.5 }}>
-                  {today.dayLabel}
+                  {displayDayLabel}
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, marginLeft: 8 }}>
+                    {todayLog ? '· tap to change' : '· tap to set'}
+                  </Text>
                 </Text>
-                {today.dayOfCycle && today.cycleLength && (
+                {today.dayOfCycle && today.cycleLength && !todayLog && (
                   <Text style={{ fontSize: 12, fontWeight: '600', color: colors.accent, marginLeft: 8, opacity: 0.7 }}>
                     Day {today.dayOfCycle} of {today.cycleLength}
                   </Text>
@@ -125,12 +185,12 @@ export default function HomeScreen() {
               </View>
 
               <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 18, marginBottom: 14 }}>
-                {today.description}
+                {displayDesc}
               </Text>
 
-              {today.equipment.length > 0 && (
+              {displayEquipment.length > 0 && (
                 <View style={styles.pillRow}>
-                  {today.equipment.map((eq) => (
+                  {displayEquipment.map((eq) => (
                     <View key={eq} style={{
                       backgroundColor: 'rgba(200,255,87,0.08)',
                       borderColor:     'rgba(200,255,87,0.22)',
@@ -140,26 +200,32 @@ export default function HomeScreen() {
                       paddingHorizontal: 11,
                     }}>
                       <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accent }}>
-                        {eq}
+                        {formatEquipmentTag(eq)}
                       </Text>
                     </View>
                   ))}
                 </View>
               )}
 
-              {today.equipment.length > 0 && (
+              {displayEquipment.length > 0 && (
                 <TouchableOpacity
-                  onPress={() => router.push('/(tabs)')}
+                  onPress={() => router.push({
+                    pathname: "/(tabs)",
+                    params: {
+                      requiredEquipment: displayEquipment.join(","),
+                      filterLabel: displayDayLabel,
+                    },
+                  })}
                   activeOpacity={0.7}
                   style={[styles.trainingCta, { borderTopColor: colors.border }]}
                 >
                   <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accent, letterSpacing: 0.2 }}>
-                    Find a {today.dayLabel.toLowerCase()}-friendly gym
+                    Find a {displayDayLabel.toLowerCase()}-friendly gym
                   </Text>
                   <Ionicons name="arrow-forward" size={14} color={colors.accent} />
                 </TouchableOpacity>
               )}
-            </View>
+            </TouchableOpacity>
           ) : (
             <TouchableOpacity
               onPress={() => router.push('/profile/sections/training')}
@@ -360,6 +426,13 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <TodaySessionPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={(session) => { setSession(session) }}
+        current={todayLog?.session}
+      />
     </SafeAreaView>
   )
 }

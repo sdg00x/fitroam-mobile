@@ -40,6 +40,8 @@ export default function ExploreScreen() {
     planningCity?:     string
     planningLat?:      string
     planningLng?:      string
+    requiredEquipment?: string
+    filterLabel?:       string
   }>()
 
 
@@ -78,7 +80,7 @@ export default function ExploreScreen() {
 
  useEffect(() => {
   if (lat && lng && profile.onboarded) fetchGyms()
-}, [lat, lng, activeSort, profile.primaryActivity, profile.monthlyBudget, profile.travelDailyBudget, profile.maxDistanceMinutes])
+}, [lat, lng, activeSort, profile.primaryActivity, profile.monthlyBudget, profile.travelDailyBudget, profile.maxDistanceMinutes, params.requiredEquipment])
 
   async function fetchGyms() {
     if (!lat || !lng) return
@@ -117,16 +119,21 @@ const budgetMap: Record<string, string> = {
   over_80:      'over_20',
 }
 
-const params = new URLSearchParams({
-  lat:     String(lat),
-  lng:     String(lng),
-  style:   styleMap[profile.primaryActivity] ?? 'mixed',
-  budget:  budgetMap[budget] ?? '10_to_20',
-  maxMins: String(profile.maxDistanceMinutes),
-  radius:  '3000',
-  sort:    activeSort,
+const reqEq = params.requiredEquipment
+const apiParams = new URLSearchParams({
+  lat:                String(lat),
+  lng:                String(lng),
+  primaryActivity:    profile.primaryActivity || 'staying_in_shape',
+  activities:         profile.activities.join(','),
+  facilityTypes:      profile.facilityTypes.join(','),
+  lifestyle:          profile.lifestyle.join(','),
+  priorities:         profile.priorities.join(','),
+  maxDistanceMinutes: String(profile.maxDistanceMinutes),
+  radius:             '3000',
+  sort:               activeSort,
+  ...(reqEq ? { requiredEquipment: reqEq } : {}),
 })
-      const res  = await fetch(`${API_BASE}/api/gyms?${params}`)
+      console.log("[Explore] fetching:", `${API_BASE}/api/gyms?${apiParams}`); const res  = await fetch(`${API_BASE}/api/gyms?${apiParams}`)
       if (!res.ok) throw new Error(`API error ${res.status}`)
       const data = await res.json()
       setGyms(data.gyms)
