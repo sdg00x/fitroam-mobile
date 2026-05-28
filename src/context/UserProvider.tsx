@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+const API_BASE = 'http://192.168.0.64:3000'
+
 const STORAGE_KEY = '@fitroam:user'
 
 export interface User {
@@ -25,6 +27,7 @@ interface UserContextValue {
   loading:    boolean
   isSignedIn: boolean
   signUp:     (input: { name: string; email: string; phone: string }) => Promise<User>
+  signIn:     (email: string) => Promise<User>
   update:     (patch: Partial<Pick<User, 'name' | 'email' | 'phone'>>) => Promise<User | null>
   signOut:    () => Promise<void>
   refresh:    () => Promise<void>
@@ -52,16 +55,60 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = useCallback(async (input: { name: string; email: string; phone: string }) => {
+    const res = await fetch(`${API_BASE}/api/auth/signup`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        email: input.email.trim().toLowerCase(),
+        name:  input.name.trim(),
+        phone: input.phone.trim(),
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Sign up failed')
+    }
+    const data = await res.json()
     const newUser: User = {
-      id:        generateId(),
+      id:        data.user.id,
       name:      input.name.trim(),
-      email:     input.email.trim().toLowerCase(),
+      email:     data.user.email,
       phone:     input.phone.trim(),
-      createdAt: new Date().toISOString(),
+      createdAt: data.user.createdAt,
     }
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newUser))
+    if (data.profile) {
+      await AsyncStorage.setItem('@fitroam:profile', JSON.stringify(data.profile))
+    }
     setUser(newUser)
     return newUser
+  }, [])
+
+  // Sign in with email — returns user if exists, throws if not found
+  const signIn = useCallback(async (email: string) => {
+    const res = await fetch(`${API_BASE}/api/auth/signin`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email: email.trim().toLowerCase() }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Sign in failed')
+    }
+    const data = await res.json()
+    const existingUser: User = {
+      id:        data.user.id,
+      name:      data.user.name || '',
+      email:     data.user.email,
+      phone:     data.user.phone || '',
+      createdAt: data.user.createdAt,
+    }
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(existingUser))
+    if (data.profile) {
+      await AsyncStorage.setItem('@fitroam:profile', JSON.stringify(data.profile))
+    }
+    setUser(existingUser)
+    return existingUser
   }, [])
 
   const update = useCallback(async (patch: Partial<Pick<User, 'name' | 'email' | 'phone'>>) => {
@@ -100,6 +147,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       loading,
       isSignedIn: !!user,
       signUp,
+      signIn,
       update,
       signOut,
       refresh,

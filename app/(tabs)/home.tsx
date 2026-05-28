@@ -14,6 +14,7 @@ import { useTopMatch } from '../../src/hooks/useTopMatch'
 import { useStats } from '../../src/hooks/useStats'
 import { computeDailyTraining } from '../../src/lib/training'
 import { useTodaySession } from '../../src/hooks/useTodaySession'
+import { usePendingVisits } from '../../src/hooks/usePendingVisits'
 import { TodaySessionPicker } from '../../src/components/TodaySessionPicker'
 
 function formatEquipmentTag(tag: string): string {
@@ -59,6 +60,7 @@ export default function HomeScreen() {
   const firstName = user?.name ? user.name.split(/\s+/)[0] : null
   const today = computeDailyTraining(profile.trainingPattern)
   const { entry: todayLog, setSession } = useTodaySession()
+  const { visits: pendingVisits, confirm: confirmVisit } = usePendingVisits()
   const [pickerOpen, setPickerOpen] = useState(false)
 
   // If user has logged today's session, override the computed values
@@ -135,6 +137,62 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        {/* Pending visit confirmations */}
+        {pendingVisits.length > 0 && (
+          <View style={[styles.section, { paddingHorizontal: spacing.screen }]}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>CONFIRM YOUR VISITS</Text>
+            {pendingVisits.map((v) => {
+              const date = new Date(v.activatedAt)
+              const now  = new Date()
+              const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+              const when =
+                diffDays === 0 ? "today" :
+                diffDays === 1 ? "yesterday" :
+                diffDays < 7   ? `${diffDays} days ago` :
+                date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+              return (
+                <View key={v.id} style={{
+                  backgroundColor: colors.surface,
+                  borderColor:     colors.border,
+                  borderWidth:     1,
+                  borderRadius:    16,
+                  padding:         16,
+                  marginBottom:    8,
+                }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.3 }}>
+                    Did you train at {v.gym.name}?
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+                    {when} · {v.accessType === 'day_pass' ? 'Day pass' : 'Monthly'}
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                    <TouchableOpacity
+                      onPress={() => confirmVisit(v, 'denied')}
+                      activeOpacity={0.7}
+                      style={{
+                        flex: 1, paddingVertical: 11, borderRadius: 100,
+                        borderWidth: 1, borderColor: colors.border, alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>NO</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => confirmVisit(v, 'confirmed')}
+                      activeOpacity={0.85}
+                      style={{
+                        flex: 1, paddingVertical: 11, borderRadius: 100,
+                        backgroundColor: colors.accent, alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentText, letterSpacing: 0.3 }}>YES, I WENT</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+        )}
 
         {/* Today's training */}
         <View style={[styles.section, { paddingHorizontal: spacing.screen }]}>

@@ -29,7 +29,7 @@ export default function ProfileScreen() {
   const router = useRouter()
 
   const [tripCount, setTripCount] = useState(0)
-  const [showSignup, setShowSignup] = useState(false)
+  const [authMode, setAuthMode] = useState<'signup' | 'signin' | null>(null)
 
   // Refetch stats + trip count whenever the tab is focused
   useFocusEffect(useCallback(() => {
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
       >
         {/* Identity card */}
         <TouchableOpacity
-          onPress={() => user ? router.push("/profile/identity") : setShowSignup(true)}
+          onPress={() => user ? router.push("/profile/identity") : setAuthMode('signup')}
           activeOpacity={0.8}
           style={[styles.identity, {
           backgroundColor: colors.surface,
@@ -243,18 +243,19 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <Modal
-        visible={showSignup}
+        visible={authMode !== null}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowSignup(false)}
+        onRequestClose={() => setAuthMode(null)}
       >
         <GetAccessForm
-          mode="signup"
-          onClose={() => setShowSignup(false)}
+          mode={authMode ?? 'signup'}
+          onCancel={() => setAuthMode(null)}
           onComplete={() => {
-            setShowSignup(false)
+            setAuthMode(null)
             refreshUser()
           }}
+          onSwitchMode={(m) => setAuthMode(m)}
         />
       </Modal>
     </SafeAreaView>

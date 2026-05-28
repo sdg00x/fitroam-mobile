@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet , Alert} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -12,8 +12,10 @@ interface Visit {
   gymName:    string
   gymAddress: string
   accessType: string
-  days:       number
+  days?:      number
   visitedAt:  string
+  status?:    string
+  confirmedAt?: string | null
 }
 
 // Extract city from address — same logic as useStats
@@ -72,7 +74,7 @@ function groupByCity(visits: Visit[]): CityGroup[] {
 export default function PassportScreen() {
   const { colors, spacing, radius } = useTheme()
   const router = useRouter()
-  const { visits, loading } = useStats()
+  const { visits, loading, updateStatus, remove } = useStats()
 
   const cityGroups = useMemo(() => groupByCity(visits as Visit[]), [visits])
 
@@ -219,32 +221,123 @@ export default function PassportScreen() {
               </View>
 
               {/* Gym list */}
-              {group.visits.map((v, vi) => (
-                <View
-                  key={v.id}
-                  style={{
-                    flexDirection:    'row',
-                    alignItems:       'flex-start',
-                    paddingVertical:  10,
-                    borderTopWidth:   vi === 0 ? 0 : 1,
-                    borderTopColor:   colors.border,
-                  }}
-                >
-                  <Ionicons name="barbell-outline" size={16} color={colors.textSecondary} style={{ marginTop: 2 }} />
-                  <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text
-                      style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}
-                      numberOfLines={1}
-                    >
-                      {v.gymName}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
-                      {formatDate(v.visitedAt)}
-                      {v.accessType === 'monthly' ? ' · Monthly access' : ' · Day pass'}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+              {group.visits.map((v, vi) => {
+                const isPending   = v.status === 'pending'
+                const isConfirmed = v.status === 'confirmed'
+                return (
+                  <TouchableOpacity
+                    key={v.id}
+                    activeOpacity={0.7}
+                    onLongPress={() => {
+                      Alert.alert(
+                        v.gymName,
+                        `Remove this visit from your passport?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Remove', style: 'destructive', onPress: () => remove(v) },
+                        ]
+                      )
+                    }}
+                    onPress={() => {
+                      Alert.alert(
+                        v.gymName,
+                        `What do you want to do with this visit?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          ...(isConfirmed ? [] : [{
+                            text: 'Mark as confirmed',
+                            onPress: () => updateStatus(v, 'confirmed'),
+                          } as const]),
+                          ...(isPending ? [] : [{
+                            text: 'Mark as pending',
+                            onPress: () => updateStatus(v, 'pending'),
+                          } as const]),
+                          {
+                            text: 'Remove from passport',
+                            style: 'destructive' as const,
+                            onPress: () => remove(v),
+                          },
+                        ]
+                      )
+                    }}
+                    style={{
+                      flexDirection:    'row',
+                      alignItems:       'flex-start',
+                      paddingVertical:  10,
+                      borderTopWidth:   vi === 0 ? 0 : 1,
+                      borderTopColor:   colors.border,
+                    }}
+                  >
+                    <View style={{ marginTop: 4 }}>
+                      <View style={{
+                        width: 8, height: 8, borderRadius: 4,
+                        backgroundColor: isConfirmed ? colors.accent : isPending ? colors.textMuted : colors.textSecondary,
+                      }} />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text
+                        style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}
+                        numberOfLines={1}
+                      >
+                        {v.gymName}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                        {formatDate(v.visitedAt)}
+                        {v.accessType === 'monthly' ? ' · Monthly access' : ' · Day pass'}
+                        {isPending ? ' · Tap ✓ to confirm' : ''}
+                      </Text>
+                    </View>
+
+                    {/* Inline quick actions for pending visits */}
+                    {isPending && (
+                      <View style={{ flexDirection: 'row', gap: 6, marginLeft: 8 }}>
+                        <TouchableOpacity
+                          onPress={(e) => {
+                            e.stopPropagation()
+                            Alert.alert(
+                              'Confirm visit',
+                              `Mark your visit to ${v.gymName} as confirmed?`,
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                { text: 'Yes, I went', onPress: () => updateStatus(v, 'confirmed') },
+                              ]
+                            )
+                          }}
+                          hitSlop={6}
+                          style={{
+                            width: 30, height: 30, borderRadius: 15,
+                            backgroundColor: colors.accent,
+                            alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <Ionicons name="checkmark" size={16} color={colors.accentText} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={(e) => {
+                            e.stopPropagation()
+                            Alert.alert(
+                              "Didn't go?",
+                              `Remove this visit to ${v.gymName} from your passport?`,
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                { text: 'Remove', style: 'destructive', onPress: () => updateStatus(v, 'denied') },
+                              ]
+                            )
+                          }}
+                          hitSlop={6}
+                          style={{
+                            width: 30, height: 30, borderRadius: 15,
+                            borderWidth: 1, borderColor: colors.border,
+                            alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <Ionicons name="close" size={16} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )
+              })}
             </View>
           ))}
         </ScrollView>

@@ -1,10 +1,8 @@
 import * as Linking from 'expo-linking'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import React, { useState, useEffect } from 'react'
-import {
-  View, Text, ScrollView,
-  TouchableOpacity, StyleSheet, Image, Modal, Platform,
-} from 'react-native'
+import {View, Text, ScrollView,
+  TouchableOpacity, StyleSheet, Image, Modal, Platform, Alert} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -125,6 +123,20 @@ export default function GymDetailScreen() {
       .finally(() => { if (!cancelled) setGymLoading(false) })
     return () => { cancelled = true }
   }, [id])
+
+  // Visit memory — load this user's past visits to this gym
+  const [visits, setVisits] = useState<any[]>([])
+  useEffect(() => {
+    if (!id || !user?.id) return
+    let cancelled = false
+    fetch(`http://192.168.0.64:3000/api/gyms/${id}/visits`, {
+      headers: { 'x-user-id': user.id },
+    })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { if (!cancelled) setVisits(data.visits || []) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [id, user?.id])
 
   // Merge — API data wins where available; navigation params fill the rest
   const name             = apiGym?.name             ?? params.name             ?? ""

@@ -33,7 +33,7 @@ export default function ActivitiesScreen() {
       primaryActivity: selected[0],
       activities:      selected,
     })
-    router.push('/onboarding/lifestyle')
+    router.push('/onboarding/priorities')
   }
 
   return (
@@ -65,7 +65,7 @@ export default function ActivitiesScreen() {
       </View>
 
       <View style={[styles.header, { paddingHorizontal: spacing.screen }]}>
-        <Text style={[styles.step, { color: colors.textMuted }]}>STEP 1 OF 5</Text>
+        <Text style={[styles.step, { color: colors.textMuted }]}>STEP 2 OF 3</Text>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           What are you into?
         </Text>

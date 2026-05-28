@@ -43,16 +43,18 @@ export default function PrioritiesScreen() {
     await save({
       priorities,
       maxDistanceMinutes: distance,
+      onboarded: true,
     })
-    router.push('/onboarding/training')
+    router.replace('/(tabs)/home')
   }
 
   async function handleSkip() {
     await save({
       priorities:         [],
       maxDistanceMinutes: 15,
+      onboarded: true,
     })
-    router.push('/onboarding/training')
+    router.replace('/(tabs)/home')
   }
 
   return (
@@ -103,7 +105,7 @@ export default function PrioritiesScreen() {
       </View>
 
       <View style={[styles.header, { paddingHorizontal: spacing.screen }]}>
-        <Text style={[styles.step, { color: colors.textMuted }]}>STEP 5 OF 6</Text>
+        <Text style={[styles.step, { color: colors.textMuted }]}>STEP 3 OF 3</Text>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           What matters most?
         </Text>

@@ -7,15 +7,16 @@ import { useTheme } from '../theme/useTheme'
 import { useUser, isValidEmail, isValidUKPhone, isValidName } from '../hooks/useUser'
 
 interface Props {
-  mode:         'access' | 'signup' | 'update'
+  mode:         'access' | 'signup' | 'update' | 'signin'
   contextName?: string
   onComplete:   () => void
+  onSwitchMode?: (mode: 'signup' | 'signin') => void
   onCancel?:    () => void
 }
 
-export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props) {
+export function GetAccessForm({ mode, contextName, onComplete, onCancel, onSwitchMode }: Props) {
   const { colors, spacing, radius } = useTheme()
-  const { user, signUp, update } = useUser()
+  const { user, signUp, signIn, update } = useUser()
 
   const [name,  setName]  = useState(mode === 'update' && user ? user.name  : '')
   const [email, setEmail] = useState(mode === 'update' && user ? user.email : '')
@@ -25,6 +26,7 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
   const eyebrow =
     mode === 'access' ? 'GET ACCESS' :
     mode === 'update' ? 'EDIT DETAILS' :
+    mode === 'signin' ? 'SIGN IN' :
     'CREATE ACCOUNT'
 
   const title =
@@ -32,6 +34,8 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
       ? (contextName ? `One step before ${contextName}` : 'A few details to get you in')
       : mode === 'update'
       ? 'Your details'
+      : mode === 'signin'
+      ? 'Welcome back'
       : 'Save your spot in FitRoam'
 
   const subtitle =
@@ -39,37 +43,50 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
       ? 'We need a way to reach you about your access. Stays private.'
       : mode === 'update'
       ? 'Update your name, email, or phone. Changes save instantly.'
+      : mode === 'signin'
+      ? 'Enter your email to pick up where you left off.'
       : 'So your trips and saved gyms stay with you across devices.'
 
   const cta =
     mode === 'access' ? 'CONTINUE' :
     mode === 'update' ? 'SAVE CHANGES' :
+    mode === 'signin' ? 'SIGN IN' :
     'CREATE ACCOUNT'
 
   async function handleSubmit() {
-    if (!isValidName(name)) {
-      Alert.alert('Name needed', 'Tell us what to call you.')
-      return
-    }
-    if (!isValidEmail(email)) {
-      Alert.alert('Email needed', 'Please enter a valid email.')
-      return
-    }
-    if (!isValidUKPhone(phone)) {
-      Alert.alert('UK phone needed', 'Use a UK number — 07xxx or +44 7xxx.')
-      return
+    // Sign in only needs email
+    if (mode === 'signin') {
+      if (!isValidEmail(email)) {
+        Alert.alert('Email needed', 'Please enter the email you signed up with.')
+        return
+      }
+    } else {
+      if (!isValidName(name)) {
+        Alert.alert('Name needed', 'Tell us what to call you.')
+        return
+      }
+      if (!isValidEmail(email)) {
+        Alert.alert('Email needed', 'Please enter a valid email.')
+        return
+      }
+      if (!isValidUKPhone(phone)) {
+        Alert.alert('UK phone needed', 'Use a UK number — 07xxx or +44 7xxx.')
+        return
+      }
     }
 
     try {
       setSubmitting(true)
       if (mode === 'update') {
         await update({ name, email, phone })
+      } else if (mode === 'signin') {
+        await signIn(email)
       } else {
         await signUp({ name, email, phone })
       }
       onComplete()
-    } catch (err) {
-      Alert.alert('Could not save', 'Try again.')
+    } catch (err: any) {
+      Alert.alert('Could not save', err?.message || 'Try again.')
     } finally {
       setSubmitting(false)
     }
@@ -117,7 +134,7 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
           {subtitle}
         </Text>
 
-        <Field label="YOUR NAME" colors={colors}>
+        {mode !== 'signin' && <Field label="YOUR NAME" colors={colors}>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -132,7 +149,7 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
               borderRadius:    radius.row,
             }]}
           />
-        </Field>
+        </Field>}
 
         <Field label="EMAIL" colors={colors}>
           <TextInput
@@ -152,7 +169,7 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
           />
         </Field>
 
-        <Field label="PHONE (UK)" colors={colors}>
+        {mode !== 'signin' && <Field label="PHONE (UK)" colors={colors}>
           <TextInput
             value={phone}
             onChangeText={setPhone}
@@ -167,16 +184,40 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel }: Props
               borderRadius:    radius.row,
             }]}
           />
-        </Field>
+        </Field>}
 
-        <Text style={{
+        {mode !== 'signin' && <Text style={{
           fontSize:   11,
           color:      colors.textMuted,
           marginTop:  4,
           lineHeight: 16,
         }}>
           We use your details only for booking confirmations and your passport. Never shared, never sold.
-        </Text>
+        </Text>}
+
+        {onSwitchMode && mode === 'signup' && (
+          <TouchableOpacity
+            onPress={() => onSwitchMode('signin')}
+            style={{ marginTop: 24, alignSelf: 'center' }}
+            hitSlop={10}
+          >
+            <Text style={{ fontSize: 13, color: colors.textMuted }}>
+              Already have an account? <Text style={{ color: colors.accent, fontWeight: '700' }}>Sign in</Text>
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {onSwitchMode && mode === 'signin' && (
+          <TouchableOpacity
+            onPress={() => onSwitchMode('signup')}
+            style={{ marginTop: 24, alignSelf: 'center' }}
+            hitSlop={10}
+          >
+            <Text style={{ fontSize: 13, color: colors.textMuted }}>
+              New here? <Text style={{ color: colors.accent, fontWeight: '700' }}>Create account</Text>
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ flex: 1 }} />
 
