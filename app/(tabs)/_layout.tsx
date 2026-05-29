@@ -3,26 +3,27 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
 
 export default function TabLayout() {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.background,
-          borderTopColor:  colors.border,
-          borderTopWidth:  1,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
         },
-        tabBarActiveTintColor:   colors.isDark ? '#c8ff57' : '#1a1a1a',
+        tabBarActiveTintColor: isDark ? '#c8ff57' : '#1a1a1a',
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
-          fontSize:      10,
-          fontWeight:    'bold',
+          fontSize: 10,
+          fontWeight: 'bold',
           textTransform: 'uppercase',
           letterSpacing: 1,
         },
       }}
     >
+      <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen
         name="home"
         options={{
