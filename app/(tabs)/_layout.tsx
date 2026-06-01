@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
+import { WaveformIcon } from '../../src/components/WaveformIcon'
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme()
@@ -29,7 +30,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <WaveformIcon size={size} color={color} />
           ),
         }}
       />
