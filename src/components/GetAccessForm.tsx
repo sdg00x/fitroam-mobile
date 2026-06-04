@@ -202,7 +202,7 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel, onSwitc
             hitSlop={10}
           >
             <Text style={{ fontSize: 13, color: colors.textMuted }}>
-              Already have an account? <Text style={{ color: colors.accent, fontWeight: '700' }}>Sign in</Text>
+              Already have an account? <Text style={{ color: colors.accentReadable, fontWeight: '700' }}>Sign in</Text>
             </Text>
           </TouchableOpacity>
         )}
@@ -214,7 +214,7 @@ export function GetAccessForm({ mode, contextName, onComplete, onCancel, onSwitc
             hitSlop={10}
           >
             <Text style={{ fontSize: 13, color: colors.textMuted }}>
-              New here? <Text style={{ color: colors.accent, fontWeight: '700' }}>Create account</Text>
+              New here? <Text style={{ color: colors.accentReadable, fontWeight: '700' }}>Create account</Text>
             </Text>
           </TouchableOpacity>
         )}

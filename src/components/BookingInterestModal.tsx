@@ -123,7 +123,7 @@ export function BookingInterestModal({
 
           {phase === 'submitting' && (
             <View style={styles.body}>
-              <ActivityIndicator color={colors.accent} />
+              <ActivityIndicator color={colors.accentReadable} />
               <Text style={{ color: colors.textMuted, marginTop: 12, fontSize: 13 }}>
                 One sec…
               </Text>

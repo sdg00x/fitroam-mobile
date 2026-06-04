@@ -139,7 +139,7 @@ export default function TripsScreen() {
 
       {loading ? (
         <View style={styles.centred}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colors.accentReadable} />
         </View>
       ) : error ? (
         <View style={styles.centred}>
@@ -147,7 +147,7 @@ export default function TripsScreen() {
             {error}
           </Text>
           <TouchableOpacity onPress={fetchTrips} style={{ marginTop: 16 }}>
-            <Text style={{ color: colors.accent, fontWeight: '700' }}>Try again</Text>
+            <Text style={{ color: colors.accentReadable, fontWeight: '700' }}>Try again</Text>
           </TouchableOpacity>
         </View>
       ) : !hasAnyTrips ? (

@@ -20,7 +20,7 @@ export default function WelcomeScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { paddingHorizontal: spacing.screen }]}>
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 40 }}>
-          <Text style={[styles.eyebrow, { color: colors.accent }]}>FITROAM</Text>
+          <Text style={[styles.eyebrow, { color: colors.accentReadable }]}>FITROAM</Text>
           <Text style={[styles.headline, { color: colors.textPrimary }]}>
             Find your gym{'\n'}in any city
           </Text>
@@ -49,7 +49,7 @@ export default function WelcomeScreen() {
             style={{ paddingVertical: 16, alignItems: 'center' }}
           >
             <Text style={{ fontSize: 14, color: colors.textSecondary }}>
-              Already have an account? <Text style={{ color: colors.accent, fontWeight: '700' }}>Sign in</Text>
+              Already have an account? <Text style={{ color: colors.accentReadable, fontWeight: '700' }}>Sign in</Text>
             </Text>
           </TouchableOpacity>
         </View>

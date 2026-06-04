@@ -113,7 +113,7 @@ export default function TripDetailScreen() {
   function planLeg(leg: TripLeg) {
     if (!trip) return
     router.push({
-      pathname: '/(tabs)',
+      pathname: '/(tabs)/home',
       params: {
         planningTripId:   trip.id,
         planningLegId:    leg.id,
@@ -130,7 +130,7 @@ export default function TripDetailScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
         <View style={styles.centred}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colors.accentReadable} />
         </View>
       </SafeAreaView>
     )
@@ -150,7 +150,7 @@ export default function TripDetailScreen() {
             {error || 'Trip not found'}
           </Text>
           <TouchableOpacity onPress={fetchTrip} style={{ marginTop: 16 }}>
-            <Text style={{ color: colors.accent, fontWeight: '700' }}>Try again</Text>
+            <Text style={{ color: colors.accentReadable, fontWeight: '700' }}>Try again</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -377,7 +377,7 @@ export default function TripDetailScreen() {
                 <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMuted }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={saveName} disabled={saving}>
-                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accent }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentReadable }}>
                   {saving ? 'Saving...' : 'Save'}
                 </Text>
               </TouchableOpacity>

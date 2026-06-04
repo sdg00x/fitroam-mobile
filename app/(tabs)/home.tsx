@@ -72,7 +72,7 @@ function MessageBlock({ message, onRetry }: { message: ChatMessage; onRetry?: (i
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={{ marginTop: 4 }}
           >
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>
+            <Text style={{ color: colors.accentReadable, fontSize: 12, fontWeight: '600' }}>
               Failed — tap to retry
             </Text>
           </TouchableOpacity>
@@ -132,18 +132,11 @@ export default function HomeScreen() {
       ? `Plan leg ${legOrder} of "${tripName}" — I'm in ${city}. What gyms should I hit?`
       : `I'm planning a leg in ${city}. What gyms should I hit?`
     setPrompt(prefill)
-    // Focus input on next tick so the field is hot for editing
-    setTimeout(() => inputRef.current?.focus(), 100)
-    // Clear the params from the URL so a back-then-forward doesn't re-fire.
-    router.setParams({
-      planningTripId: undefined,
-      planningLegId: undefined,
-      planningTripName: undefined,
-      planningLegOrder: undefined,
-      planningCity: undefined,
-      planningLat: undefined,
-      planningLng: undefined,
-    } as any)
+    // Focus input on next tick so the field is hot for editing.
+    // Bigger delay than 100ms — tab transition + screen mount take time on real devices.
+    setTimeout(() => inputRef.current?.focus(), 400)
+    // Don't clear params via setParams (causes effect re-fire loop on some expo-router versions).
+    // The consumedPlanningRef guard prevents re-firing if user clears input and params are still in URL.
   }, [params.planningLegId, params.planningCity, params.planningLegOrder, params.planningTripName])
   const scrollRef = useRef<ScrollView>(null)
   const [prompt, setPrompt] = useState('')

@@ -100,13 +100,13 @@ export default function ActivitiesScreen() {
                 <Ionicons
                   name={a.icon as any}
                   size={26}
-                  color={active ? colors.accent : colors.textSecondary}
+                  color={active ? colors.accentReadable : colors.textSecondary}
                   style={{ marginBottom: 10 }}
                 />
                 <Text style={{
                   fontSize:   14,
                   fontWeight: '700',
-                  color:      active ? colors.accent : colors.textPrimary,
+                  color:      active ? colors.accentReadable : colors.textPrimary,
                 }}>
                   {a.label}
                 </Text>

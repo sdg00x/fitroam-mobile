@@ -292,7 +292,7 @@ export default function GymDetailScreen() {
           style={styles.iconBtn}
           onPress={() => openMaps(address ?? '')}
         >
-          <Ionicons name="navigate-outline" size={22} color={colors.accent} />
+          <Ionicons name="navigate-outline" size={22} color={colors.accentReadable} />
         </TouchableOpacity>
       </View>
 
@@ -467,7 +467,7 @@ export default function GymDetailScreen() {
               <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Why it matched</Text>
               {reasons.map((r: string) => (
                 <View key={r} style={styles.reasonRow}>
-                  <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
+                  <Ionicons name="checkmark-circle" size={16} color={colors.accentReadable} />
                   <Text style={{ fontSize: 13, color: colors.textPrimary, marginLeft: 8 }}>{r}</Text>
                 </View>
               ))}
@@ -529,7 +529,7 @@ export default function GymDetailScreen() {
                       alignItems:      'center',
                       justifyContent:  'center',
                     }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accent }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentReadable }}>
                         {review.author?.charAt(0) ?? '?'}
                       </Text>
                     </View>
@@ -751,10 +751,10 @@ export default function GymDetailScreen() {
                         Day passes
                       </Text>
                       <Text style={{ fontSize: 18, fontWeight: '800', color: '#f87171', marginTop: 2 }}>
-                        £{((dayPassPenceNum ?? 0) * days / 100).toFixed(0)}
+                        {dayPassPenceNum ? `£${((dayPassPenceNum * days) / 100).toFixed(0)}` : '—'}
                       </Text>
                       <Text style={{ fontSize: 11, color: 'rgba(74,222,128,0.5)', marginTop: 1 }}>
-                        {days}x £{((dayPassPenceNum ?? 0) / 100).toFixed(0)}
+                        {dayPassPenceNum ? `${days}x £${(dayPassPenceNum / 100).toFixed(0)}` : 'price not published'}
                       </Text>
                     </View>
                     <Ionicons name="arrow-forward" size={18} color="rgba(74,222,128,0.4)" />
@@ -767,7 +767,7 @@ export default function GymDetailScreen() {
                         Monthly
                       </Text>
                       <Text style={{ fontSize: 18, fontWeight: '800', color: '#4ade80', marginTop: 2 }}>
-                        £{((monthlyPenceNum ?? 0) / 100).toFixed(0)}
+                        {monthlyPenceNum ? `£${(monthlyPenceNum / 100).toFixed(0)}` : '—'}
                       </Text>
                       <Text style={{ fontSize: 11, color: 'rgba(74,222,128,0.5)', marginTop: 1 }}>
                         Up to 30 days
@@ -796,14 +796,18 @@ export default function GymDetailScreen() {
                 marginTop:   4,
               }}>
                 {accessType === 'monthly'
-                  ? `Monthly — £${((monthlyPenceNum ?? 0) / 100).toFixed(0)}`
-                  : `${days} day pass${days > 1 ? 'es' : ''} — £${((dayPassPenceNum ?? 0) * days / 100).toFixed(0)}`
+                  ? (monthlyPenceNum
+                      ? `Monthly — £${(monthlyPenceNum / 100).toFixed(0)}`
+                      : 'Monthly access')
+                  : (dayPassPenceNum
+                      ? `${days} day pass${days > 1 ? 'es' : ''} — £${(dayPassPenceNum * days / 100).toFixed(0)}`
+                      : `${days} day pass${days > 1 ? 'es' : ''}`)
                 }
               </Text>
               <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
                 {accessType === 'monthly'
                   ? `Full access for up to 30 days. We'll remind you to cancel on day ${days}.`
-                  : `${days} visit${days > 1 ? 's' : ''} at ${name}.`
+                  : `${days} visit${days > 1 ? 's' : ''} at ${name}.${dayPassPenceNum ? '' : ' Price not published — check with the gym before going.'}`
                 }
               </Text>
             </View>

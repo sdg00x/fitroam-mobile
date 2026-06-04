@@ -67,11 +67,11 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
         <View style={styles.body}>
           <View style={styles.header}>
             {rank ? (
-              <Text style={[styles.rank, { color: colors.accent }]}>#{rank}</Text>
+              <Text style={[styles.rank, { color: colors.accentReadable }]}>#{rank}</Text>
             ) : saved ? (
               <View style={[styles.savedPill, { backgroundColor: colors.surfaceRaised }]}>
                 <Ionicons name="checkmark" size={12} color={colors.accent} />
-                <Text style={[styles.savedText, { color: colors.accent }]}>SAVED</Text>
+                <Text style={[styles.savedText, { color: colors.accentReadable }]}>SAVED</Text>
               </View>
             ) : null}
             <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
@@ -106,9 +106,16 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
             </View>
           ) : null}
 
-          {/* Tap-for-details affordance — subtle, signals card is tappable */}
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, opacity: 0.7 }}>Tap card for details ›</Text>
+          {/* Tap-for-details affordance — louder for unverified gyms (where it's the primary action) */}
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
+            <Text style={{
+              color: canConcierge ? colors.textMuted : colors.accent,
+              fontSize: canConcierge ? 11 : 13,
+              fontWeight: canConcierge ? '400' : '700',
+              opacity: canConcierge ? 0.7 : 1,
+            }}>
+              Tap card for details ›
+            </Text>
           </View>
 
           {/* GREEN button — different copy + payload for verified vs unverified gyms */}
@@ -116,12 +123,17 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
             <TouchableOpacity
               onPress={() => setModalOpen(true)}
               activeOpacity={0.85}
-              style={[styles.greenBtn, { backgroundColor: colors.accent }]}
+              style={[
+                styles.greenBtn,
+                canConcierge
+                  ? { backgroundColor: colors.accent }
+                  : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.accent },
+              ]}
             >
-              <Text style={[styles.greenBtnMain, { color: colors.accentText }]}>
+              <Text style={[styles.greenBtnMain, { color: canConcierge ? colors.accentText : colors.accent }]}>
                 {canConcierge ? 'Let us handle everything for you' : 'Notify me when we cover this gym'}
               </Text>
-              <Text style={[styles.greenBtnSub, { color: colors.accentText }]}>
+              <Text style={[styles.greenBtnSub, { color: canConcierge ? colors.accentText : colors.accent }]}>
                 {canConcierge ? '£2.99 · early access' : 'early access'}
               </Text>
             </TouchableOpacity>
