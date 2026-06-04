@@ -111,18 +111,18 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
             <Text style={{ color: colors.textMuted, fontSize: 11, opacity: 0.7 }}>Tap card for details ›</Text>
           </View>
 
-          {/* GREEN button — only for verified gyms */}
-          {canConcierge && user ? (
+          {/* GREEN button — different copy + payload for verified vs unverified gyms */}
+          {user ? (
             <TouchableOpacity
               onPress={() => setModalOpen(true)}
               activeOpacity={0.85}
               style={[styles.greenBtn, { backgroundColor: colors.accent }]}
             >
               <Text style={[styles.greenBtnMain, { color: colors.accentText }]}>
-                Let us handle everything for you
+                {canConcierge ? 'Let us handle everything for you' : 'Notify me when we cover this gym'}
               </Text>
               <Text style={[styles.greenBtnSub, { color: colors.accentText }]}>
-                £2.99 · early access
+                {canConcierge ? '£2.99 · early access' : 'early access'}
               </Text>
             </TouchableOpacity>
           ) : null}
@@ -153,7 +153,13 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
         <BookingInterestModal
           visible={modalOpen}
           onClose={() => setModalOpen(false)}
-          gym={{ id: gym.id, name: gym.name, dayPassUrl: gym.dayPassUrl }}
+          gym={{
+            id: gym.id,
+            name: gym.name,
+            address: gym.address,
+            dayPassUrl: gym.dayPassUrl,
+            verified: gym.verified,
+          }}
           user={{ id: user.id, email: user.email ?? null, name: user.name ?? null }}
           tripId={tripId}
           source={source ?? 'gym_card'}

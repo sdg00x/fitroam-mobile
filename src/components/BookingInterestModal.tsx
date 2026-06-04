@@ -9,11 +9,13 @@ import { recordBookingInterest } from '../lib/bookingInterest'
 export interface BookingInterestModalProps {
   visible:    boolean
   onClose:    () => void
-  /** Gym to record interest for. Must be a verified gym (caller's responsibility). */
+  /** Gym to record interest for. Modal handles both verified and unverified paths based on `verified`. */
   gym: {
     id:          string
     name:        string
+    address:     string | null
     dayPassUrl:  string | null
+    verified:    boolean
   }
   /** Current user (always present when modal opens — caller ensures). */
   user: {
@@ -51,13 +53,25 @@ export function BookingInterestModal({
     setPhase('submitting')
     setErrMsg(null)
     ;(async () => {
-      const res = await recordBookingInterest({
-        userId: user.id,
-        gymId: gym.id,
-        email: user.email!,
-        tripId,
-        source,
-      })
+      const res = gym.verified
+        ? await recordBookingInterest({
+            kind: 'verified',
+            userId: user.id,
+            gymId: gym.id,
+            email: user.email!,
+            tripId,
+            source,
+          })
+        : await recordBookingInterest({
+            kind: 'unverified',
+            userId: user.id,
+            gymPlaceId: gym.id,
+            gymName: gym.name,
+            gymAddress: gym.address ?? undefined,
+            email: user.email!,
+            tripId,
+            source,
+          })
       if (cancelled) return
       if (res.ok) {
         setPhase('success')
@@ -123,8 +137,9 @@ export function BookingInterestModal({
               </Text>
 
               <Text style={[styles.bodyCopy, { color: colors.textSecondary }]}>
-                Concierge isn't live yet, but you've just told us this matters to you — and that's how we decide what to build next.{"\n\n"}
-                You'll be the first person we contact when we flip the switch on {gym.name}, and we're moving fast to make that happen.
+                {gym.verified
+                  ? `Concierge isn't live yet, but you've just told us this matters to you — and that's how we decide what to build next.\n\nYou'll be the first person we contact when we flip the switch on ${gym.name}, and we're moving fast to make that happen.`
+                  : `${gym.name} isn't in our verified network yet — we haven't checked their day-pass setup ourselves. We've logged your interest so we can prioritise verifying gyms like this one next.\n\nYou'll be the first to know when ${gym.name} is in our network.`}
               </Text>
 
               {gym.dayPassUrl ? (
