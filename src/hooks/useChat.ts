@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useUserContext } from '../context/UserProvider'
+import { API_BASE } from '../lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 const ACTIVE_THREAD_KEY = 'fitroam:activeThreadId'
 
 export interface ChatGym {

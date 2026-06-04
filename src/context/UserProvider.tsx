@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { API_BASE } from '../lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 const STORAGE_KEY = '@fitroam:user'
 

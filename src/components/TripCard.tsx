@@ -22,7 +22,28 @@ export interface Trip {
   createdAt: string
   updatedAt: string
   legs:      TripLeg[]
-  tripGyms:  Array<{ id: string; gymId: string; legId: string | null; gym: { name: string } }>
+  tripGyms:  Array<{
+    id: string
+    gymId: string
+    legId: string | null
+    matchScore: number
+    notes: string | null
+    gym: {
+      id: string
+      name: string
+      address: string | null
+      lat: number
+      lng: number
+      dayPass: boolean
+      dayPassPence: number | null
+      dayPassUrl: string | null
+      photoUrls: string[]
+      equipmentTags: string[]
+      verified: boolean
+      citySlug: string | null
+      rating: number | null
+    }
+  }>
 }
 
 interface Props {

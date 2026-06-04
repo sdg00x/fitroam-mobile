@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
+import { API_BASE } from '../lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 export interface Weather {
   tempC:       number

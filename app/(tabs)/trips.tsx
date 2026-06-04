@@ -8,8 +8,8 @@ import { useRouter, useFocusEffect } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
 import { useUser } from "../../src/hooks/useUser"
 import { TripCard, Trip } from '../../src/components/TripCard'
+import { API_BASE } from '../../src/lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 interface CategorizedTrips {
   nextUp:   Trip | null

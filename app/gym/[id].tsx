@@ -9,17 +9,39 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
 import { useUser } from '../../src/hooks/useUser'
 import { GetAccessForm } from '../../src/components/GetAccessForm'
+import { API_BASE } from '../../src/lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 
 function formatHours(openingHours: any): { day: string; hours: string }[] {
   if (!openingHours?.periods) return []
+  const periods = openingHours.periods
+
+  // Google's convention for 24/7 venues: a single period with open day=0 hour=0 minute=0 and no close.
+  // Our old code looped days 0-6 and only matched day 0, marking the rest "Closed" incorrectly.
+  if (
+    periods.length === 1 &&
+    periods[0].open?.day === 0 &&
+    periods[0].open?.hour === 0 &&
+    periods[0].open?.minute === 0 &&
+    !periods[0].close
+  ) {
+    return DAYS.map((day) => ({ day, hours: 'Open 24 hours' }))
+  }
+
   return DAYS.map((day, i) => {
-    const period = openingHours.periods.find((p: any) => p.open?.day === i)
+    const period = periods.find((p: any) => p.open?.day === i)
     if (!period) return { day, hours: 'Closed' }
+    // Per-day 24h indicator: open at 00:00 with no close.
+    if (
+      period.open.hour === 0 &&
+      period.open.minute === 0 &&
+      !period.close
+    ) {
+      return { day, hours: 'Open 24 hours' }
+    }
     const open  = `${String(period.open.hour).padStart(2,'0')}:${String(period.open.minute).padStart(2,'0')}`
     const close = period.close
       ? `${String(period.close.hour).padStart(2,'0')}:${String(period.close.minute).padStart(2,'0')}`
@@ -109,6 +131,9 @@ export default function GymDetailScreen() {
   }>()
 
   const id = params.id
+  const { colors, spacing, radius } = useTheme()
+  const router = useRouter()
+  const { user, isSignedIn } = useUser()
 
   // Hydrate from API — fills any gaps from navigation params
   const [apiGym, setApiGym] = useState<any>(null)
@@ -116,7 +141,7 @@ export default function GymDetailScreen() {
   useEffect(() => {
     if (!id) return
     let cancelled = false
-    fetch(`http://192.168.0.64:3000/api/gyms/${id}`)
+    fetch(`${API_BASE}/api/gyms/${id}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => { if (!cancelled) setApiGym(data.gym) })
       .catch(() => {})
@@ -129,7 +154,7 @@ export default function GymDetailScreen() {
   useEffect(() => {
     if (!id || !user?.id) return
     let cancelled = false
-    fetch(`http://192.168.0.64:3000/api/gyms/${id}/visits`, {
+    fetch(`${API_BASE}/api/gyms/${id}/visits`, {
       headers: { 'x-user-id': user.id },
     })
       .then(r => r.ok ? r.json() : Promise.reject())
@@ -167,9 +192,6 @@ export default function GymDetailScreen() {
   const gymReviews = apiGym?.openingHours?.reviews
     ? apiGym.openingHours.reviews
     : (reviews ? JSON.parse(reviews) : [])
-  const { colors, spacing, radius } = useTheme()
-  const router  = useRouter()
-  const { user, isSignedIn } = useUser()
 
   const [showPassport, setShowPassport] = useState(false)
   const [days,         setDays]         = useState(1)

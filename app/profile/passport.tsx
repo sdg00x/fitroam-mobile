@@ -4,19 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
-import { useStats } from '../../src/hooks/useStats'
+import { useStats, Visit } from '../../src/hooks/useStats'
 
-interface Visit {
-  id:         string
-  gymId:      string
-  gymName:    string
-  gymAddress: string
-  accessType: string
-  days?:      number
-  visitedAt:  string
-  status?:    string
-  confirmedAt?: string | null
-}
 
 // Extract city from address — same logic as useStats
 function extractCity(address: string): string {

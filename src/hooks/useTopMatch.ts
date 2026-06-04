@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useProfile } from './useProfile'
 import { GymData } from '../components/GymCard'
+import { API_BASE } from '../lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 export function useTopMatch(lat: number | null, lng: number | null) {
   const { profile } = useProfile()

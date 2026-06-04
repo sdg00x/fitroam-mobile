@@ -9,8 +9,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/useTheme'
 import { useUser } from "../../src/hooks/useUser"
 import { Trip, TripLeg } from '../../src/components/TripCard'
+import { ChatGymCard } from '../../src/components/ChatGymCard'
+import { API_BASE } from '../../src/lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 function formatDateShort(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -219,6 +220,30 @@ export default function TripDetailScreen() {
         </View>
 
         {/* Legs */}
+        {/* Trip-level gyms (not bound to a specific leg) */}
+        {(() => {
+          const tripLevelGyms = trip.tripGyms.filter(tg => tg.legId === null)
+          if (tripLevelGyms.length === 0) return null
+          return (
+            <View style={{ marginTop: 24 }}>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                SAVED GYMS
+              </Text>
+              <View style={{ gap: 8 }}>
+                {tripLevelGyms.map(tg => (
+                  <ChatGymCard
+                    key={tg.id}
+                    gym={tg.gym}
+                    saved
+                    tripId={trip.id}
+                    source="trip_detail"
+                  />
+                ))}
+              </View>
+            </View>
+          )
+        })()}
+
         <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: 24 }]}>
           ITINERARY
         </Text>
@@ -268,20 +293,15 @@ export default function TripDetailScreen() {
 
               {/* Gyms for this leg */}
               {gymsInLeg.length > 0 ? (
-                <View style={{ marginTop: 14 }}>
+                <View style={{ marginTop: 14, gap: 8 }}>
                   {gymsInLeg.map(tg => (
-                    <View key={tg.id} style={[styles.gymRow, { borderTopColor: colors.border }]}>
-                      <Ionicons name="barbell-outline" size={16} color={colors.textSecondary} />
-                      <Text style={{
-                        fontSize:   13,
-                        color:      colors.textPrimary,
-                        fontWeight: '600',
-                        marginLeft: 8,
-                        flex:       1,
-                      }}>
-                        {tg.gym.name}
-                      </Text>
-                    </View>
+                    <ChatGymCard
+                      key={tg.id}
+                      gym={tg.gym}
+                      saved
+                      tripId={trip.id}
+                      source="trip_detail"
+                    />
                   ))}
                 </View>
               ) : (

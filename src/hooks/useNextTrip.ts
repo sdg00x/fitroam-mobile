@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { useUser } from './useUser'
 import { Trip } from '../components/TripCard'
+import { API_BASE } from '../lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 interface Result {
   trip:        Trip | null

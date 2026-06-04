@@ -18,8 +18,8 @@ import {
   avatarColorForActivity,
   initialsFromName,
 } from '../../src/lib/labels'
+import { API_BASE } from '../../src/lib/api'
 
-const API_BASE = 'http://192.168.0.64:3000'
 
 export default function ProfileScreen() {
   const { colors, spacing, radius } = useTheme()

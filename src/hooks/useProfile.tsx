@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useUserContext } from '../context/UserProvider'
+import { API_BASE } from '../lib/api'
 
 const STORAGE_KEY = '@fitroam:profile'
-const API_BASE = 'http://192.168.0.64:3000'
 
 export interface UserProfile {
   primaryActivity:    string
@@ -16,6 +16,7 @@ export interface UserProfile {
   priorities:         string[]
   onboarded:          boolean
   trainingPattern:    string | null
+  citySlug:           string | null
 }
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -29,6 +30,7 @@ const DEFAULT_PROFILE: UserProfile = {
   priorities:         [],
   onboarded:          false,
   trainingPattern:    null,
+  citySlug:           null,
 }
 
 interface ProfileContextValue {

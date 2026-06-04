@@ -9,16 +9,16 @@ import {
   Platform,
   ScrollView,
   Keyboard,
-  Image,
-  Linking,
   ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useTheme } from '../../src/theme/useTheme'
 import { useUser } from '../../src/hooks/useUser'
 import { useChat, ChatMessage, ChatGym } from '../../src/hooks/useChat'
 import { WaveformIcon } from '../../src/components/WaveformIcon'
+import { ChatGymCard } from '../../src/components/ChatGymCard'
 import { ChatHistorySheet } from '../../src/components/ChatHistorySheet'
 
 const EXAMPLE_PROMPTS = [
@@ -27,69 +27,6 @@ const EXAMPLE_PROMPTS = [
   '"Miami next month, 3 days, under £60"',
 ]
 
-function formatPrice(pence: number | null): string {
-  if (pence == null) return 'Price on request'
-  return `£${(pence / 100).toFixed(2)} day pass`
-}
-
-function formatEquipmentTag(tag: string): string {
-  return tag.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-// ---------- Inline gym card (rendered inside assistant messages) ----------
-function ChatGymCard({ gym, rank }: { gym: ChatGym; rank: number }) {
-  const { colors, spacing, radius } = useTheme()
-  return (
-    <View
-      style={[
-        styles.gymCard,
-        { backgroundColor: colors.surface, borderRadius: radius.card },
-      ]}
-    >
-      {gym.photoUrls?.[0] ? (
-        <Image source={{ uri: gym.photoUrls[0] }} style={styles.gymPhoto} />
-      ) : null}
-      <View style={styles.gymBody}>
-        <View style={styles.gymHeader}>
-          <Text style={[styles.gymRank, { color: colors.accent }]}>#{rank}</Text>
-          <Text style={[styles.gymName, { color: colors.textPrimary }]} numberOfLines={2}>
-            {gym.name}
-          </Text>
-        </View>
-        <Text style={[styles.gymAddress, { color: colors.textSecondary }]} numberOfLines={1}>
-          {gym.address}
-        </Text>
-        <Text style={[styles.gymPrice, { color: colors.textPrimary }]}>
-          {formatPrice(gym.dayPassPence)}
-        </Text>
-        {gym.equipmentTags?.length ? (
-          <View style={styles.tagRow}>
-            {gym.equipmentTags.slice(0, 4).map((tag) => (
-              <View
-                key={tag}
-                style={[styles.tag, { backgroundColor: colors.surfaceRaised, borderRadius: radius.tag }]}
-              >
-                <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                  {formatEquipmentTag(tag)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
-        {gym.dayPassUrl ? (
-          <TouchableOpacity
-            onPress={() => Linking.openURL(gym.dayPassUrl!)}
-            style={[styles.bookBtn, { backgroundColor: colors.accent, borderRadius: radius.btn }]}
-            activeOpacity={0.85}
-          >
-            <Text style={[styles.bookText, { color: colors.accentText }]}>BUY DAY PASS</Text>
-            <Ionicons name="open-outline" size={16} color={colors.accentText} />
-          </TouchableOpacity>
-        ) : null}
-      </View>
-    </View>
-  )
-}
 
 // ---------- One message block ----------
 function useLoadingCopy(active: boolean) {
@@ -166,7 +103,48 @@ function MessageBlock({ message, onRetry }: { message: ChatMessage; onRetry?: (i
 export default function HomeScreen() {
   const { colors, spacing, radius } = useTheme()
   const { user } = useUser()
+  const params = useLocalSearchParams<{
+    planningTripId?: string
+    planningLegId?: string
+    planningTripName?: string
+    planningLegOrder?: string
+    planningCity?: string
+    planningLat?: string
+    planningLng?: string
+  }>()
+  const router = useRouter()
+  const consumedPlanningRef = useRef<string | null>(null)
   const inputRef = useRef<TextInput>(null)
+  const [voiceHintShown, setVoiceHintShown] = useState(false)
+
+  // When user taps "Plan this leg" from Trip Detail, prefill the input with leg context.
+  // The ref guards against re-injecting if the user clears the input and the params are still in the URL.
+  useEffect(() => {
+    if (!params.planningCity || !params.planningLegId) return
+    if (consumedPlanningRef.current === params.planningLegId) return
+    consumedPlanningRef.current = params.planningLegId
+
+    const city = params.planningCity
+    const legOrder = params.planningLegOrder ?? '1'
+    const tripName = params.planningTripName
+    // Build a prompt that gives the AI everything it needs: city, leg ordinal, trip name if useful.
+    const prefill = tripName
+      ? `Plan leg ${legOrder} of "${tripName}" — I'm in ${city}. What gyms should I hit?`
+      : `I'm planning a leg in ${city}. What gyms should I hit?`
+    setPrompt(prefill)
+    // Focus input on next tick so the field is hot for editing
+    setTimeout(() => inputRef.current?.focus(), 100)
+    // Clear the params from the URL so a back-then-forward doesn't re-fire.
+    router.setParams({
+      planningTripId: undefined,
+      planningLegId: undefined,
+      planningTripName: undefined,
+      planningLegOrder: undefined,
+      planningCity: undefined,
+      planningLat: undefined,
+      planningLng: undefined,
+    } as any)
+  }, [params.planningLegId, params.planningCity, params.planningLegOrder, params.planningTripName])
   const scrollRef = useRef<ScrollView>(null)
   const [prompt, setPrompt] = useState('')
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -218,6 +196,7 @@ export default function HomeScreen() {
 
   const handleMicPress = () => {
     inputRef.current?.focus()
+    if (!voiceHintShown) setVoiceHintShown(true)
   }
 
   const handleNewChat = async () => {
@@ -364,6 +343,28 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
         </View>
+        {voiceHintShown ? (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            marginHorizontal: 16,
+            marginBottom: 8,
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, flex: 1 }}>
+              Voice coming soon — type instead for now ✨
+            </Text>
+            <TouchableOpacity onPress={() => setVoiceHintShown(false)} hitSlop={8}>
+              <Ionicons name="close" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
 
       <ChatHistorySheet
@@ -478,72 +479,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   // Gym card
-  gymCard: {
-    overflow: 'hidden',
-  },
-  gymPhoto: {
-    width: '100%',
-    height: 140,
-    backgroundColor: '#222',
-  },
-  gymBody: {
-    padding: 14,
-    gap: 6,
-  },
-  gymHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  gymRank: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  gymName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  gymAddress: {
-    fontSize: 12,
-  },
-  gymPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  tag: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  tagText: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  bookBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginTop: 10,
-  },
-  bookText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
   // Input row
   inputRow: {
     flexDirection: 'row',
