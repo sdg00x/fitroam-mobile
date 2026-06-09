@@ -53,7 +53,17 @@ export function useChat() {
         const cachedId = await AsyncStorage.getItem(ACTIVE_THREAD_KEY)
         if (cachedId) {
           const ok = await loadThread(cachedId)
-          if (ok) return
+          if (ok) {
+            // Still need to populate the threads list for the chat history sheet
+            const listRes = await fetch(`${API_BASE}/api/concierge/threads`, {
+              headers: { 'x-user-id': user.id },
+            })
+            if (listRes.ok) {
+              const listData = await listRes.json()
+              setThreads(listData.threads || [])
+            }
+            return
+          }
         }
         // 2. Otherwise, load latest thread from server
         const res = await fetch(`${API_BASE}/api/concierge/threads`, {
