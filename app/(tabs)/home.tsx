@@ -199,7 +199,7 @@ export default function HomeScreen() {
 
   const handlePickThread = async (id: string) => {
     setHistoryOpen(false)
-    if (id !== threadId) await loadThread(id)
+    await loadThread(id)
   }
 
   return (
