@@ -320,14 +320,16 @@ export default function GymDetailScreen() {
         </ScrollView>
 
         {/* Score badge */}
-        <View style={[styles.scoreBadge, {
-          backgroundColor: colors.scoreBg,
-          borderRadius:    radius.tag,
-        }]}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.scoreText }}>
-            {matchScore}% match
-          </Text>
-        </View>
+        {!!matchScore && (
+          <View style={[styles.scoreBadge, {
+            backgroundColor: colors.scoreBg,
+            borderRadius:    radius.tag,
+          }]}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: colors.scoreText }}>
+              {matchScore}% match
+            </Text>
+          </View>
+        )}
 
         <View style={{ paddingHorizontal: spacing.screen, paddingTop: spacing.lg }}>
 
@@ -371,7 +373,7 @@ export default function GymDetailScreen() {
             <View style={[styles.metaChip, { backgroundColor: colors.surfaceRaised, borderRadius: radius.tag }]}>
               <Ionicons name="walk-outline" size={14} color={colors.textSecondary} />
               <Text style={{ fontSize: 12, color: colors.textSecondary, marginLeft: 4 }}>
-                {distanceMinutes} min walk
+                {distanceMinutes ? `${distanceMinutes} min walk` : "Distance unknown"}
               </Text>
             </View>
             <View style={[styles.metaChip, {

@@ -18,7 +18,13 @@ export interface ChatGymCardGym {
   dayPassUrl:     string | null
   photoUrls:      string[]
   equipmentTags?: string[] | null
+  equipment?:     string[] | null
   verified:       boolean
+  matchScore?:    number | null
+  distanceM?:     number | null
+  rating?:        number | null
+  ratingCount?:   number | null
+  reviews?:       any[]
 }
 
 interface Props {
@@ -57,13 +63,18 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
         onPress={() => router.push({
           pathname: `/gym/${gym.id}`,
           params: {
-            name:           gym.name,
-            address:        gym.address,
-            dayPassPence:   gym.dayPassPence?.toString() ?? '',
-            dayPassUrl:     gym.dayPassUrl ?? '',
-            equipmentTags:  JSON.stringify(gym.equipment ?? []),
-            photoUrls:      JSON.stringify(gym.photoUrls ?? []),
-            verified:       gym.verified ? 'true' : 'false',
+            name:             gym.name,
+            address:          gym.address ?? '',
+            dayPassPence:     gym.dayPassPence?.toString() ?? '',
+            dayPassUrl:       gym.dayPassUrl ?? '',
+            equipmentTags:    JSON.stringify(gym.equipmentTags ?? gym.equipment ?? []),
+            photoUrls:        JSON.stringify(gym.photoUrls ?? []),
+            verified:         gym.verified ? 'true' : 'false',
+            matchScore:       gym.matchScore?.toString() ?? '',
+            distanceMinutes:  gym.distanceM ? Math.round(gym.distanceM / 80).toString() : '',
+            rating:           gym.rating?.toString() ?? '',
+            ratingCount:      gym.ratingCount?.toString() ?? '',
+            reviews:          JSON.stringify(gym.reviews ?? []),
           }
         })}
         activeOpacity={0.9}

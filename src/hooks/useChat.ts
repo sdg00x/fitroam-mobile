@@ -12,9 +12,13 @@ export interface ChatGym {
   dayPassPence: number | null
   dayPassUrl: string | null
   equipmentTags: string[]
+  equipment?: string[]
   photoUrls: string[]
   verified: boolean
   rating: number | null
+  ratingCount?: number | null
+  distanceM?: number | null
+  matchScore?: number | null
 }
 
 export interface ChatMessage {
