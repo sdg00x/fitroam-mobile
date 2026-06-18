@@ -17,12 +17,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inWelcome    = first === 'welcome'
     const inOnboarding = first === 'onboarding'
 
-    console.log('[Gate]', {
-      userId:    user?.id?.slice(0, 8),
-      onboarded: profile.onboarded,
-      segments:  segments.join('/'),
-      inWelcome, inOnboarding,
-    })
 
     if (!user) {
       if (!inWelcome) router.replace('/welcome')

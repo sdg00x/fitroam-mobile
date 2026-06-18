@@ -185,9 +185,9 @@ export default function GymDetailScreen() {
   const photoUrls        = params.photoUrls
   const reviews          = params.reviews
 
-  const photos = apiGym?.photoUrls
-    ? apiGym.photoUrls
-    : (photoUrls ? JSON.parse(photoUrls) : [])
+  const paramPhotos = photoUrls ? JSON.parse(photoUrls) : []
+  const apiPhotos = apiGym?.photoUrls ?? []
+  const photos = paramPhotos.length > 0 ? paramPhotos : apiPhotos
 
   const gymReviews = apiGym?.openingHours?.reviews
     ? apiGym.openingHours.reviews
