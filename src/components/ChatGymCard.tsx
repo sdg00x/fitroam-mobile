@@ -54,7 +54,18 @@ export function ChatGymCard({ gym, rank, saved, tripId, source }: Props) {
   return (
     <>
       <TouchableOpacity
-        onPress={() => router.push(`/gym/${gym.id}`)}
+        onPress={() => router.push({
+          pathname: `/gym/${gym.id}`,
+          params: {
+            name:           gym.name,
+            address:        gym.address,
+            dayPassPence:   gym.dayPassPence?.toString() ?? '',
+            dayPassUrl:     gym.dayPassUrl ?? '',
+            equipmentTags:  JSON.stringify(gym.equipment ?? []),
+            photoUrls:      JSON.stringify(gym.photoUrls ?? []),
+            verified:       gym.verified ? 'true' : 'false',
+          }
+        })}
         activeOpacity={0.9}
         style={[styles.card, {
           backgroundColor: colors.surface,

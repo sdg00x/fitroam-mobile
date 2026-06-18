@@ -171,6 +171,7 @@ export default function GymDetailScreen() {
   const priceDisplay     = params.priceDisplay      ?? ""
   const priceSubDisplay  = params.priceSubDisplay   ?? ""
   const websiteUrl       = apiGym?.websiteUrl       ?? params.websiteUrl       ?? ""
+  const dayPassUrl       = apiGym?.dayPassUrl        ?? params.dayPassUrl        ?? ""
   const rating           = apiGym?.rating?.toString()      ?? params.rating      ?? ""
   const ratingCount      = apiGym?.ratingCount?.toString() ?? params.ratingCount ?? ""
   const openNow          = params.openNow           ?? ""
